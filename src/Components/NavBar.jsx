@@ -1,27 +1,43 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars } from '@fortawesome/free-solid-svg-icons'
 
 
 const NavBar = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setIsScrolled(true)
+      } else {
+        setIsScrolled(false)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
 
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen((prev) => !prev)
     }
     return (
-        <nav className="h-[70px] fixed w-full px-6 md:px-16 lg:px-24 xl:px-26 flex items-center justify-between z-20 bg-transparent transition-all">
+        <nav className={`h-[70px] fixed w-full px-6 md:px-16 lg:px-24 xl:px-26 flex items-center justify-between z-20 transition-all ${isScrolled
+      ? 'bg-white text-[var(--color-accent)] shadow-md'
+      : 'bg-transparent text-[var(--color-text)]'}`}>
             {/* Logo */}
-            <a href="/" className="text-[var(--color-text)] font-bold">PrettyNbeauty</a>
+            <a href="/" className="text-2xl font-bold transition">PrettyNbeauty</a>
             
             <div className='flex gap-10 items-center justify-center'>    
             {/* Desktop Menu */}
             <ul className="md:flex hidden items-center gap-10">
-                <li><a className="text-[var(--color-text)] font-medium hover:text-[var(--color-accent)] transition" href="#">Home</a></li>
-                <li><a className="text-[var(--color-text)] font-medium hover:text-[var(--color-accent)] transition" href="#">Services</a></li>
-                <li><a className="text-[var(--color-text)] font-medium hover:text-[var(--color-accent)] transition" href="#">Portfolio</a></li>
-                <li><a className="text-[var(--color-text)] font-medium hover:text-[var(--color-accent)] transition" href="#">Pricing</a></li>
+                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="#">Home</a></li>
+                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="#">Services</a></li>
+                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="#">Portfolio</a></li>
+                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="#">Pricing</a></li>
             </ul>
 
             {/* Book Now Button (Desktop) */}

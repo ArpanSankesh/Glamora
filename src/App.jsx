@@ -7,7 +7,7 @@ const App = () => {
     <>
       <NavBar />
       <Hero />
-      <div className='w-full h-screen bg-red-300 opacity-50'></div>
+      <div className='w-full h-screen opacity-50'></div>
     </>
   )
 }
