@@ -1,1 +1,26 @@
 @import "tailwindcss";
+
+:root {
+  /* Primary Pink Shades */
+  --pink-10: #FFF0F6;
+  --pink-20: #FFD6E7;
+  --pink-30: #FFB3D1;
+  --pink-40: #FF80B5;
+  --pink-50: #FF4D99;
+  --pink-60: #FF1A7D;
+  --pink-70: #E6006E;
+  --pink-80: #B30054;
+  --pink-90: #80003B;
+
+  /* Core Brand Colors */
+  --color-text: #FFF0F5;
+  --color-accent: #B30054;
+  --color-secondary: #FF1493;
+
+  /* Overlay Color with 50% Opacity */
+  --color-overlay: rgb(255, 105, 180); /* FF69B4 */
+
+  /* Optional Surface Background (optional fallback) */
+  --color-surface: #1E0F14;
+
+}
