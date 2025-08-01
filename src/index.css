@@ -16,6 +16,8 @@
   --color-text: #FFF0F5;
   --color-accent: #B30054;
   --color-secondary: #FF1493;
+  --color-border: #FF69B4;
+  --color-opaque: rgba(255, 20, 145, 0.098);
 
   /* Overlay Color with 50% Opacity */
   --color-overlay: rgb(255, 105, 180); /* FF69B4 */
