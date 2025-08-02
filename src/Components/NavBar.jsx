@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars } from '@fortawesome/free-solid-svg-icons'
+import { useLocation } from 'react-router-dom';
 
 
 const NavBar = () => {
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
+      if(!isHomePage) return
       if (window.scrollY > 10) {
         setIsScrolled(true)
       } else {
@@ -25,9 +29,16 @@ const NavBar = () => {
         setIsMobileMenuOpen((prev) => !prev)
     }
     return (
-        <nav className={`h-[70px] fixed w-full px-6 md:px-16 lg:px-24 xl:px-26 flex items-center justify-between z-20 transition-all ${isScrolled
-      ? 'bg-white text-[var(--color-accent)] shadow-md'
-      : 'bg-transparent text-[var(--color-text)]'}`}>
+        <nav className={`fixed top-0 left-0 w-full h-[70px] z-20 transition-all 
+  px-6 md:px-16 lg:px-24 xl:px-26 flex items-center justify-between 
+  ${
+    isHomePage
+      ? isScrolled
+        ? 'bg-[var(--color-text)] text-[var(--color-accent)] '
+        : 'bg-transparent text-[var(--color-text)]'
+      : 'bg-[var(--color-text)] text-[var(--color-accent)] '
+  }
+`}>
             {/* Logo */}
             <a href="/" className="text-2xl font-bold transition">PrettyNbeauty</a>
             
