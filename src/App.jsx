@@ -5,6 +5,7 @@ import FeaturedServices from './Components/FeaturedServices'
 import AboutSection from './Components/AboutSection'
 import Testimonials from './Components/Testimonials'
 import ContactSection from './Components/ContactSection'
+import Footer from './Components/Footer'
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
       <AboutSection />
       <Testimonials />
       <ContactSection />
+      <Footer />
     </>
   )
 }
