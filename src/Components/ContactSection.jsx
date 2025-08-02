@@ -2,7 +2,7 @@ import React from 'react'
 
 const ContactSection = () => {
   return (
-     <form className="flex flex-col items-center text-sm">
+     <form className="flex flex-col items-center text-sm py-20">
             <p className="text-lg text-blue-600 font-medium pb-2">Contact Us</p>
             <h1 className="text-4xl font-semibold text-slate-700 pb-4">Get in touch with us</h1>
             <p className="text-sm text-gray-500 text-center pb-10">Lorem Ipsum is simply dummy text of the printing and typesetting industry.<br />Lorem Ipsum has been the industry's standard dummy text.</p>
