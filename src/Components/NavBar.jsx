@@ -34,10 +34,10 @@ const NavBar = () => {
             <div className='flex gap-10 items-center justify-center'>    
             {/* Desktop Menu */}
             <ul className="md:flex hidden items-center gap-10">
-                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="#">Home</a></li>
-                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="#">Services</a></li>
-                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="#">Portfolio</a></li>
-                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="#">Pricing</a></li>
+                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="/">Home</a></li>
+                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="/services">Services</a></li>
+                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="/about">About</a></li>
+                <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="/contact">Contact</a></li>
             </ul>
 
             {/* Book Now Button (Desktop) */}

@@ -1,22 +1,21 @@
 import React from 'react'
 import NavBar from './Components/NavBar'
-import Hero from './Components/Hero'
-import FeaturedServices from './Components/FeaturedServices'
-import AboutSection from './Components/AboutSection'
-import Testimonials from './Components/Testimonials'
-import ContactSection from './Components/ContactSection'
+import Home from './Pages/Home'
+import { Routes, Route } from 'react-router-dom'
+import Services from './Pages/Services'
 import Footer from './Components/Footer'
+
 
 const App = () => {
   return (
     <>
       <NavBar />
-      <Hero />
-      <FeaturedServices />
-      <AboutSection />
-      <Testimonials />
-      <ContactSection />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/services" element={<Services />} />
+      </Routes>
       <Footer />
+      
     </>
   )
 }
