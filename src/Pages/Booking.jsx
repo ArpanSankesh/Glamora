@@ -1,25 +1,24 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../context/cartContext'
+
 
 const Booking = () => {
     const navigate = useNavigate();
-
+    
     const [name, setName] = React.useState('');
     const [phone, setPhone] = React.useState('');
     const [date, setDate] = React.useState('');
     const [time, setTime] = React.useState('');
 
+    const { cartItems, removeFromCart } = useCart();
 
-    const products = [
-        { name: "Running Shoes", description: ["Lightweight and comfortable", "Breathable mesh upper", "Ideal for jogging and casual wear"], offerPrice: 250, price: 200, quantity: 1, size: 42, image: "https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/card/productImage.png", category: "Footwear", },
-        { name: "Running Shoes", description: ["Lightweight and comfortable", "Breathable mesh upper", "Ideal for jogging and casual wear"], offerPrice: 250, price: 200, quantity: 1, size: 42, image: "https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/card/productImage2.png", category: "Footwear", },
-        { name: "Running Shoes", description: ["Lightweight and comfortable", "Breathable mesh upper", "Ideal for jogging and casual wear"], offerPrice: 250, price: 200, quantity: 1, size: 42, image: "https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/card/productImage3.png", category: "Footwear", },
-    ]
+
     return (
         <div className="flex flex-col md:flex-row py-40 max-w-6xl w-full px-6 mx-auto">
             <div className='flex-1 max-w-4xl'>
                 <h1 className="text-3xl font-medium mb-6">
-                    Shopping Cart <span className="text-sm text-[var(--color-accent)]">3 Items</span>
+                    Shopping Cart <span className="text-sm text-[var(--color-accent)]">{cartItems.length} {cartItems.length === 1 ? 'Item': 'Items'}</span>
                 </h1>
 
                 <div className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 text-base font-medium pb-3">
@@ -28,7 +27,7 @@ const Booking = () => {
                     <p className="text-center">Action</p>
                 </div>
 
-                {products.map((product, index) => (
+                {cartItems.map((product, index) => (
                     <div key={index} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3">
                         <div className="flex items-center md:gap-6 gap-3">
                             <div className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden">
@@ -40,7 +39,7 @@ const Booking = () => {
                             </div>
                         </div>
                         <p className="text-center">₹{product.offerPrice * product.quantity}</p>
-                        <button className="cursor-pointer mx-auto">
+                        <button onClick={()=> removeFromCart(product.id)} className="cursor-pointer mx-auto">
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="m12.5 7.5-5 5m0-5 5 5m5.833-2.5a8.333 8.333 0 1 1-16.667 0 8.333 8.333 0 0 1 16.667 0" stroke="#FF532E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>

@@ -1,15 +1,15 @@
 import React, { useState } from 'react'
 import { useCart } from '../context/cartContext';
 
-const ProductCard = ({ name, description, image, price, offerPrice }) => {
+const ProductCard = ({ id, name, description, image, price, offerPrice }) => {
     const { addToCart, removeFromCart, isInCart } = useCart();
 
 
     const handleClick = () => {
-        if (isInCart(name)) {
-            removeFromCart(name);
+        if (isInCart(id)) {
+            removeFromCart(id);
         } else {
-            addToCart({ name, description, image, price, offerPrice });
+            addToCart({ id,name, description, image, price, offerPrice, quantity: 1 });
         }
     };
 
@@ -31,11 +31,11 @@ const ProductCard = ({ name, description, image, price, offerPrice }) => {
                         <button
                             onClick={handleClick}
                             className={`cursor-pointer flex items-center justify-center gap-1 md:w-[80px] w-[64px] h-[34px] rounded font-medium transition-all
-                                ${isInCart(name)
+                                ${isInCart(id)
                                     ? 'bg-[var(--color-opaque)] border border-[var(--color-secondary)] text-[var(--color-accent)]'
                                     : 'bg-[var(--color-text)] text-[var(--color-secondary)]'}`}
                         >
-                            {isInCart(name) ? 'Remove' : 'Add'}
+                            {isInCart(id) ? 'Remove' : 'Add'}
                         </button>
                     </div>
                 </div>

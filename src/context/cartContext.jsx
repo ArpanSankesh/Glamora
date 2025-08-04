@@ -1,21 +1,28 @@
-// src/context/CartContext.jsx
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    const stored = localStorage.getItem('cart');
+    return stored ? JSON.parse(stored) : [];
+  });
+
+  // Save to localStorage whenever cart changes
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+  }, [cartItems]);
 
   const addToCart = (product) => {
     setCartItems((prev) => [...prev, product]);
   };
 
-  const removeFromCart = (productName) => {
-    setCartItems((prev) => prev.filter((item) => item.name !== productName));
+  const removeFromCart = (id) => {
+    setCartItems((prevItems) => prevItems.filter(item => item.id !== id));
   };
 
-  const isInCart = (productName) => {
-    return cartItems.some((item) => item.name === productName);
+  const isInCart = (id) => {
+    return cartItems.some((item) => item.id === id);
   };
 
   return (
