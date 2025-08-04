@@ -7,7 +7,7 @@ const products = [
     time: 45,
     price: 1200,
     offerPrice: 899,
-    image: "./src/assets/services/facial.jpg"
+    image: "./src/assets/facial.jpg"
   },
   {
     id: 2,
@@ -17,7 +17,7 @@ const products = [
     time: 60,
     price: 2000,
     offerPrice: 1599,
-    image: "./src/assets/services/korean.jpg"
+    image: "./src/assets/hero2.jpg"
   },
   {
     id: 3,
@@ -27,7 +27,7 @@ const products = [
     time: 30,
     price: 500,
     offerPrice: 399,
-    image: "./src/assets/services/bleach.jpg"
+    image: "./src/assets/bleach.jpg"
   },
   {
     id: 4,
@@ -37,7 +37,7 @@ const products = [
     time: 40,
     price: 800,
     offerPrice: 599,
-    image: "./src/assets/services/hairstyle.jpg"
+    image: "./src/assets/hairStyle.jpg"
   },
   {
     id: 5,
@@ -47,7 +47,7 @@ const products = [
     time: 120,
     price: 3500,
     offerPrice: 2999,
-    image: "./src/assets/services/prebridal.jpg"
+    image: "./src/assets/prebridal.jpg"
   },
   {
     id: 6,
@@ -57,7 +57,7 @@ const products = [
     time: 90,
     price: 3000,
     offerPrice: 2499,
-    image: "./src/assets/services/makeup.jpg"
+    image: "./src/assets/makeup.jpg"
   },
   {
     id: 7,
@@ -67,7 +67,7 @@ const products = [
     time: 60,
     price: 1800,
     offerPrice: 1499,
-    image: "./src/assets/services/o3plus.jpg"
+    image: "./src/assets/o3plus.jpg"
   },
   {
     id: 8,
@@ -77,7 +77,7 @@ const products = [
     time: 30,
     price: 600,
     offerPrice: 499,
-    image: "./src/assets/services/detan.jpg"
+    image: "./src/assets/bodypolish.jpg"
   },
   {
     id: 9,
@@ -87,7 +87,7 @@ const products = [
     time: 15,
     price: 150,
     offerPrice: 99,
-    image: "./src/assets/services/threading.jpg"
+    image: "./src/assets/threading.jpg"
   },
   {
     id: 10,
@@ -97,7 +97,7 @@ const products = [
     time: 60,
     price: 1300,
     offerPrice: 1099,
-    image: "./src/assets/services/rica.jpg"
+    image: "./src/assets/rica.jpg"
   },
   {
     id: 11,
@@ -107,7 +107,7 @@ const products = [
     time: 45,
     price: 1000,
     offerPrice: 799,
-    image: "./src/assets/services/normalwax.jpg"
+    image: "./src/assets/normalwax.jpg"
   },
   {
     id: 12,
@@ -117,7 +117,7 @@ const products = [
     time: 20,
     price: 400,
     offerPrice: 299,
-    image: "./src/assets/services/facewax.jpg"
+    image: "./src/assets/facewax.jpg"
   },
   {
     id: 13,
@@ -127,7 +127,7 @@ const products = [
     time: 30,
     price: 700,
     offerPrice: 599,
-    image: "./src/assets/services/bikiniwax.jpg"
+    image: "./src/assets/bikiniwax.jpg"
   },
   {
     id: 14,
@@ -137,7 +137,7 @@ const products = [
     time: 60,
     price: 1400,
     offerPrice: 1199,
-    image: "./src/assets/services/ricablack.jpg"
+    image: "./src/assets/rica.jpg"
   },
   {
     id: 15,
@@ -147,7 +147,7 @@ const products = [
     time: 30,
     price: 600,
     offerPrice: 499,
-    image: "./src/assets/services/haircut.jpg"
+    image: "./src/assets/haircut.jpg"
   },
   {
     id: 16,
@@ -157,7 +157,7 @@ const products = [
     time: 40,
     price: 700,
     offerPrice: 599,
-    image: "./src/assets/services/pedicure.jpg"
+    image: "./src/assets/pedicure.jpg"
   },
   {
     id: 17,
@@ -167,7 +167,7 @@ const products = [
     time: 40,
     price: 700,
     offerPrice: 599,
-    image: "./src/assets/services/manicure.jpg"
+    image: "./src/assets/manicure.jpg"
   },
   {
     id: 18,
@@ -177,7 +177,7 @@ const products = [
     time: 45,
     price: 1000,
     offerPrice: 799,
-    image: "./src/assets/services/hairspa.jpg"
+    image: "./src/assets/hairspa.jpg"
   },
   {
     id: 19,
@@ -187,7 +187,7 @@ const products = [
     time: 60,
     price: 1500,
     offerPrice: 1199,
-    image: "./src/assets/services/massage.jpg"
+    image: "./src/assets/massage.jpg"
   },
   {
     id: 20,
@@ -197,7 +197,7 @@ const products = [
     time: 90,
     price: 2500,
     offerPrice: 2199,
-    image: "./src/assets/services/straightening.jpg"
+    image: "./src/assets/haircut.jpg"
   },
   {
     id: 21,
@@ -207,7 +207,7 @@ const products = [
     time: 75,
     price: 2000,
     offerPrice: 1799,
-    image: "./src/assets/services/haircolor.jpg"
+    image: "./src/assets/hairStyle.jpg"
   },
   {
     id: 22,
@@ -217,7 +217,7 @@ const products = [
     time: 50,
     price: 1600,
     offerPrice: 1399,
-    image: "./src/assets/services/bodypolish.jpg"
+    image: "./src/assets/bodypolish.jpg"
   },
   {
     id: 23,
@@ -227,7 +227,7 @@ const products = [
     time: 25,
     price: 500,
     offerPrice: 399,
-    image: "./src/assets/services/saree.jpg"
+    image: "./src/assets/saree.jpg"
   },
 ];
 

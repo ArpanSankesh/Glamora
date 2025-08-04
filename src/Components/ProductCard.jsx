@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useCart } from '../context/cartContext';
 
-const ProductCard = ({ id, name, description, categry, time, price, offerPrice, image,}) => {
+const ProductCard = ({ id, name, description, categry, time, price, offerPrice, image, }) => {
     const { addToCart, removeFromCart, isInCart } = useCart();
 
 
@@ -14,7 +14,9 @@ const ProductCard = ({ id, name, description, categry, time, price, offerPrice, 
     };
 
     return (
-        <div className="border border-[var(--color-secondary)] rounded-md  bg-white lg:min-w-56 lg:max-w-90 md:max-w-80 max-w-90 w-full">
+        <div className="border border-[var(--color-secondary)] rounded-md bg-white 
+                        lg:min-w-60 lg:max-w-90 md:max-w-80 max-w-90 w-full
+                        flex flex-col justify-between h-[420px]">
             <div className="group cursor-pointer flex items-center justify-center h-60 w-full bg-cover bg-center rounded-t-md"
                 style={{ backgroundImage: `url(${image})` }}>
 
