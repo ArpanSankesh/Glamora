@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useCart } from '../context/cartContext';
 
-const ProductCard = ({ id, name, description, image, price, offerPrice }) => {
+const ProductCard = ({ id, name, description, categry, time, price, offerPrice, image,}) => {
     const { addToCart, removeFromCart, isInCart } = useCart();
 
 
@@ -9,7 +9,7 @@ const ProductCard = ({ id, name, description, image, price, offerPrice }) => {
         if (isInCart(id)) {
             removeFromCart(id);
         } else {
-            addToCart({ id,name, description, image, price, offerPrice, quantity: 1 });
+            addToCart({ id, name, description, categry, time, price, offerPrice, image, quantity: 1 });
         }
     };
 
@@ -20,8 +20,11 @@ const ProductCard = ({ id, name, description, image, price, offerPrice }) => {
 
             </div>
             <div className="p-5 text-gray-500/60 text-sm">
-                <p className="text-[var(--color-secondary)] font-semibold text-xl truncate w-full">{name}</p>
-                <p className="text-gray-700  text-sm  w-full">{description}</p>
+                <div className='flex justify-between'>
+                    <p className="text-[var(--color-secondary)] font-semibold text-xl  ">{name}</p>
+                    <p className='text-[var(--color-secondary)]  w-15'>{time} min</p>
+                </div>
+                <p className="text-gray-700  text-sm ">{description}</p>
 
                 <div className="flex items-end justify-between mt-3">
                     <p className="md:text-xl text-base font-medium text-[var(--color-secondary)]">

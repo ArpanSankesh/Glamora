@@ -17,9 +17,11 @@ const Services = () => {
                         id={service.id} 
                         name={service.name}
                         description={service.description}
-                        image={service.image}
+                        category={service.category}
+                        time={service.time} 
                         price={service.price}
                         offerPrice={service.offerPrice}
+                        image={service.image}
                     />
 
 

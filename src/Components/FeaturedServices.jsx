@@ -17,11 +17,12 @@ const FeaturedServices = () => {
             id={service.id}
             name={service.name}
             description={service.description}
-            image={service.image}
+            category={service.category}
+            time={service.time}
             price={service.price}
             offerPrice={service.offerPrice}
+            image={service.image}
           />
-
         ))}
       </div>
       <button onClick={() => navigate('/services')} className='cursor-pointer px-10 py-3 border-2 border-[var(--color-accent)] text-[var(--color-accent)]  mt-20 rounded-full hover:bg-[var(--color-accent)] hover:text-[var(--color-text)] transition-all'>More</button>
