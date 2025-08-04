@@ -2,6 +2,7 @@ import React from 'react'
 import ProductCard from '../Components/ProductCard'
 import AboutSection from '../Components/AboutSection'
 import services from '../data/servicesData.js'
+import ContactSection from '../Components/ContactSection'
 
 const Services = () => {
     
@@ -22,10 +23,12 @@ const Services = () => {
             />
 
           ))}
-                
+             
             </div>
             <div className='lg:mt-40 mt-10'>
                 <AboutSection />
+                <ContactSection />
+                
             </div>
 
         </div>

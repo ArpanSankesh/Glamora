@@ -1,8 +1,10 @@
 import React from 'react'
 import ProductCard from './ProductCard'
 import services from '../data/servicesData.js'
+import { useNavigate } from 'react-router-dom'
 
 const FeaturedServices = () => {
+ const navigate = useNavigate(); // 👈
   
   return (
     <div className='my-20 mx-10 flex flex-col items-center justify-center'>
@@ -22,7 +24,7 @@ const FeaturedServices = () => {
 
           ))}
         </div>
-        <button className='px-10 py-3 border-2 border-[var(--color-accent)] mt-20 rounded-full'>More</button>
+        <button onClick={() => navigate('/services')} className='cursor-pointer px-10 py-3 border-2 border-[var(--color-accent)] text-[var(--color-accent)]  mt-20 rounded-full hover:bg-[var(--color-accent)] hover:text-[var(--color-text)] transition-all'>More</button>
     </div>
         
   )

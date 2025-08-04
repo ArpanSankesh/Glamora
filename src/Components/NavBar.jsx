@@ -3,7 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faShoppingCart } from '@fortawesome/free-solid-svg-icons';
 
 import { faBars } from '@fortawesome/free-solid-svg-icons'
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useCart } from '../context/cartContext';
 
 
 const NavBar = () => {
@@ -11,6 +12,10 @@ const NavBar = () => {
   const isHomePage = location.pathname === '/';
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+
+  const { cartItems } = useCart();
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +30,7 @@ const NavBar = () => {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
 
 
   const toggleMobileMenu = () => {
@@ -46,21 +52,25 @@ const NavBar = () => {
       <div className='flex gap-10 items-center justify-center'>
         {/* Desktop Menu */}
         <ul className="md:flex hidden items-center gap-10">
-          <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="/">Home</a></li>
-          <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="/services">Services</a></li>
-          <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="/about">About</a></li>
-          <li><a className="font-medium hover:text-[var(--color-accent)] transition" href="/contact">Contact</a></li>
+          <li><a className="cursor-pointer font-medium hover:text-[var(--color-accent)] transition" onClick={() => (navigate('/'))} >Home</a></li>
+          <li><a className="cursor-pointer font-medium hover:text-[var(--color-accent)] transition" onClick={() => (navigate('/services'))}>Services</a></li>
+          <li><a className="cursor-pointer font-medium hover:text-[var(--color-accent)] transition" onClick={() => (navigate('/about'))}>About</a></li>
+          <li><a className="cursor-pointer font-medium hover:text-[var(--color-accent)] transition" onClick={() => {
+            const el = document.getElementById("contact");
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth" });
+            }
+          }}>Contact</a></li>
         </ul>
 
         <div className="relative cursor-pointer">
-           <FontAwesomeIcon icon={faShoppingCart} className="text-2xl text-[var(--color-accent)]" />
-          <button className="absolute -top-2 -right-2 text-xs text-white bg-[var(--color-accent)] w-[18px] h-[18px] rounded-full">3</button>
+          <FontAwesomeIcon icon={faShoppingCart} onClick={() => (navigate('/booking'))} className="text-2xl text-[var(--color-accent)]" />
+          {cartItems.length > 0 && (
+            <span className="absolute -top-2 -right-2 text-xs text-white bg-[var(--color-accent)] w-[18px] h-[18px] rounded-full flex items-center justify-center">
+              {cartItems.length}
+            </span>
+          )}
         </div>
-
-        {/* Book Now Button (Desktop) */}
-        <button type="button" className="bg-[var(--color-accent)] text-[var(--color-text)] border border-[var(--color-accent)] md:inline hidden text-sm font-semibold hover:bg-[var(--color-text)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)] active:scale-95 transition-all w-40 h-11 rounded-2xl">
-          Book Now
-        </button>
       </div>
 
 
@@ -79,15 +89,16 @@ const NavBar = () => {
                 ${isMobileMenuOpen ? '' : 'hidden'} 
                 md:hidden`}>
         <ul className="flex flex-col space-y-4 text-lg">
-          <li><a href="#" className="text-sm text-[var(--color-accent)] font-medium ">Home</a></li>
-          <li><a href="#" className="text-sm text-[var(--color-accent)] font-medium ">Services</a></li>
-          <li><a href="#" className="text-sm text-[var(--color-accent)] font-medium ">Portfolio</a></li>
-          <li><a href="#" className="text-sm text-[var(--color-accent)] font-medium ">Pricing</a></li>
+          <li><a onClick={() => (navigate('/'))} className="coursor-pointer text-sm text-[var(--color-accent)] font-medium ">Home</a></li>
+          <li><a onClick={() => (navigate('/services'))} className="coursor-pointer text-sm text-[var(--color-accent)] font-medium ">Services</a></li>
+          <li><a onClick={() => (navigate('/about'))} className="coursor-pointer text-sm text-[var(--color-accent)] font-medium ">About</a></li>
+          <li><a className="coursor-pointer text-sm text-[var(--color-accent)] font-medium " onClick={() => {
+            const el = document.getElementById("contact");
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth" });
+            }
+          }}>Contact</a></li>
         </ul>
-
-        <button type="button" className="bg-[var(--color-accent)] text-[var(--color-text)] border border-gray-300 mt-6 text-sm font-semibold hover:bg-[var(--color-text)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)] active:scale-95 transition-all w-40 h-11 rounded-2xl">
-          Book now
-        </button>
       </div>
     </nav>
   )

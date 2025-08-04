@@ -2,7 +2,8 @@ import React from 'react'
 
 const ContactSection = () => {
   return (
-     <form className="flex flex-col items-center justify-center text-sm py-20">
+    <section id="contact">
+     <form  className="flex flex-col items-center justify-center text-sm py-20">
             <p className="text-lg text-[var(--color-secondary)] font-medium md:pb-2">Contact Us</p>
             <h1 className="md:text-4xl text-2xl font-semibold text-[var(--color-accent)] pb-4">Get in touch with us</h1>
             
@@ -24,6 +25,8 @@ const ContactSection = () => {
         
             <button type="submit" className="mt-5 bg-[var(--color-accent)] text-white font-bold h-12 w-56 px-4 rounded-xl active:scale-95 transition">Send Message</button>
         </form>
+
+    </section>
   )
 }
 
