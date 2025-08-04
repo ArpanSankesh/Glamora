@@ -1,6 +1,6 @@
 import React from 'react'
 import ProductCard from './ProductCard'
-import services from '../assets/data/servicesData'
+import services from '../data/servicesData.js'
 
 const FeaturedServices = () => {
   
@@ -9,7 +9,7 @@ const FeaturedServices = () => {
         <h1 className="text-3xl md:text-5xl font-medium text-[var(--color-accent)] text-center">Featured Services</h1>
         <p className="text-[var(--color-secondary)] text-center md:text-xl mt-2">Explore our top beauty treatments.</p>
         <div className="flex flex-wrap items-center justify-center gap-6 mt-20">
-          {services.map(service => (
+          {services.slice(0, 6).map(service => (
             <ProductCard
             key={service.id}
             name={service.name}
