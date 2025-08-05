@@ -23,7 +23,7 @@ const AboutSection = () => {
         {/* Image */}
         <div className="hidden md:flex absolute bottom-0 right-[-50px] w-full md:w-auto mt-10 md:mt-0  justify-center z-15">
           <img
-            src="./src/assets/3d.png" // Replace with your actual image path
+            src="/assets/3d.png" 
             alt="About"
             className="xl:h-[620px] lg:h-[500px] object-contain"
           />

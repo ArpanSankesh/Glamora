@@ -8,7 +8,7 @@ const Hero = () => {
       <div className='w-full h-screen absolute top-0 left-0 bg-[var(--color-overlay)] opacity-50 z-10'></div>
       <div
         className="absolute inset-0 bg-cover bg-[30%_center] md:bg-center z-0"
-        style={{ backgroundImage: "url('./src/assets/hero.jpg')" }}
+        style={{ backgroundImage: "url('/assets/hero.jpg')" }}
       ></div>
 
       <div className='z-10 flex flex-col md:items-start items-center justify-center gap-5 md:gap-10 w-full md:mt-15'>

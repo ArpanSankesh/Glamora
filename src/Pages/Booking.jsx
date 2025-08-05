@@ -13,15 +13,15 @@ const Booking = () => {
     const { cartItems, removeFromCart } = useCart();
 
     const handleBookingSubmit = (e) => {
-  e.preventDefault();
+        e.preventDefault();
 
-  if (!name || !phone || !date || !time || cartItems.length === 0) {
-    alert("Please fill in all fields and add at least one service.");
-    return;
-  }
-  const total = cartItems.reduce((sum, item) => sum + (item.offerPrice * (item.quantity || 1)), 0);
+        if (!name || !phone || !date || !time || cartItems.length === 0) {
+            alert("Please fill in all fields and add at least one service.");
+            return;
+        }
+        const total = cartItems.reduce((sum, item) => sum + (item.offerPrice * (item.quantity || 1)), 0);
 
-  const message = `
+        const message = `
  Booking Request
 
 👤 Name: ${name}
@@ -36,11 +36,11 @@ ${cartItems.map(item => `• ${item.name} - ₹${item.offerPrice}`).join("\n")}
 `.trim();
 
 
-  const whatsappNumber = "919572495969"; 
-  const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+        const whatsappNumber = "919572495969";
+        const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
-  window.open(url, "_blank");
-};
+        window.open(url, "_blank");
+    };
 
 
 
@@ -60,8 +60,13 @@ ${cartItems.map(item => `• ${item.name} - ₹${item.offerPrice}`).join("\n")}
                 {cartItems.map((product, index) => (
                     <div key={index} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3">
                         <div className="flex items-center md:gap-6 gap-3">
-                            <div className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden">
-                                <img className="max-w-full h-full object-cover" src={product.image} alt={product.name} />
+                            <div className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden ">
+                                <img
+                                    className="max-w-full h-full object-cover"
+                                    src={product.image.startsWith('/assets/') ? product.image : `/assets/${product.image}`}
+                                    alt={product.name}
+                                    onError={(e) => { e.target.src = '/assets/default.jpg'; }}
+                                />
                             </div>
                             <div>
                                 <p className="hidden md:block font-semibold">{product.name}</p>

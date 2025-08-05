@@ -22,7 +22,7 @@ const PopUpBanner = () => {
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
         <img
           className="w-[300px] md:w-[500px] lg:w-[600px] h-auto rounded-xl shadow-lg"
-          src="./src/assets/PopupBanner.jpg"
+          src="/assets/PopupBanner.jpg"
           alt="Popup Banner"
         />
         <button
