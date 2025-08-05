@@ -6,12 +6,14 @@ import Services from './Pages/Services'
 import Footer from './Components/Footer'
 import About from './Pages/About'
 import Booking from './Pages/Booking'
+import PopUpBanner from './Components/PopUpBanner'
 
 
 const App = () => {
   return (
     <>
       <NavBar />
+    <PopUpBanner />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />

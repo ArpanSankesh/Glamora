@@ -8,7 +8,7 @@ const ContactSection = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const phoneNumber = '919893823972'; // <-- Replace with your actual WhatsApp number
+    const phoneNumber = '919572495969'; 
 
     const text = `Hello! 👋\n\nName: ${name}\nEmail: ${email}\nMessage: ${message}`;
     const encodedText = encodeURIComponent(text);

@@ -24,7 +24,7 @@ const Booking = () => {
   const total = cartItems.reduce((sum, item) => sum + (item.offerPrice * (item.quantity || 1)), 0);
 
   const message = `
-New Booking Request
+ Booking Request
 
 👤 Name: ${name}
 📞 Phone: ${phone}
@@ -38,7 +38,7 @@ ${cartItems.map(item => `• ${item.name} - ₹${item.offerPrice}`).join("\n")}
 `.trim();
 
 
-  const whatsappNumber = "918305343679"; 
+  const whatsappNumber = "919572495969"; 
   const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
   window.open(url, "_blank");
