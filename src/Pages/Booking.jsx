@@ -19,8 +19,6 @@ const Booking = () => {
     alert("Please fill in all fields and add at least one service.");
     return;
   }
-
-  const services = cartItems.map(item => `• ${item.name} - ₹${item.offerPrice}`).join("%0A");
   const total = cartItems.reduce((sum, item) => sum + (item.offerPrice * (item.quantity || 1)), 0);
 
   const message = `
