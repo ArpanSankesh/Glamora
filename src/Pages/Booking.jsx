@@ -63,9 +63,8 @@ ${cartItems.map(item => `• ${item.name} - ₹${item.offerPrice}`).join("\n")}
                             <div className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden ">
                                 <img
                                     className="max-w-full h-full object-cover"
-                                    src={product.image.startsWith('/assets/') ? product.image : `/assets/${product.image}`}
+                                    src={product.image}
                                     alt={product.name}
-                                    onError={(e) => { e.target.src = '/assets/default.jpg'; }}
                                 />
                             </div>
                             <div>
