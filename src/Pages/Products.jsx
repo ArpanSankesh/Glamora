@@ -1,13 +1,23 @@
 import React from 'react'
 import products from '../data/servicesData';
 import { useParams } from 'react-router-dom';
+import { useCart } from '../context/cartContext';
 
 const Products = () => {
     const { id } = useParams();
     const product = products.find(p => p.id === parseInt(id));
 
     if (!product) return <p>Product not found</p>;
+    const { addToCart, removeFromCart, isInCart } = useCart();
 
+    const handleCart = () => {
+        if (isInCart(product.id)) {
+            removeFromCart(product.id);
+        } else {
+            addToCart({ ...product, quantity: 1 });
+        }
+    };
+     
     return product && (
         <div className="max-w-6xl w-full my-36 mx-26">
             {/* <p>
@@ -43,13 +53,17 @@ const Products = () => {
                         {product.description}
                     </ul>
 
-                    <div className="flex items-center mt-10 gap-4 text-base">
-                        <button className="w-full py-3.5 cursor-pointer font-medium bg-gray-100 text-gray-800/80 hover:bg-gray-200 transition" >
-                            Add to Cart
+                    <div onClick={handleCart} className="flex items-center mt-10 gap-4 text-base">
+                        <button
+                            onClick={handleCart}
+                            className={`w-full py-3.5 cursor-pointer font-medium transition 
+                                ${isInCart(product.id)
+                                    ? 'bg-[var(--color-opaque)] border border-[var(--color-secondary)] text-[var(--color-accent)]'
+                                    : 'bg-[var(--color-accent)] text-[var(--color-text)] hover:bg-[var(--color-text)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)] hover:border'}`}
+                        >
+                            {isInCart(product.id) ? 'Remove from Cart' : 'Add to Cart'}
                         </button>
-                        <button className="w-full py-3.5 cursor-pointer font-medium bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)] transition" >
-                            Buy now
-                        </button>
+                       
                     </div>
                 </div>
             </div>
