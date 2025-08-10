@@ -19,7 +19,7 @@ const Products = () => {
     };
      
     return product && (
-        <div className="max-w-6xl w-full my-36 mx-26">
+        <div className="max-w-6xl w-full lg:py-36 lg:px-26 px-8 py-20">
             {/* <p>
                 <span>Home</span> /
                 <span> Products</span> /
@@ -27,9 +27,9 @@ const Products = () => {
                 <span className="text-indigo-500"> {product.name}</span>
             </p> */}
 
-            <div className="w-full flex flex-col justify-between md:flex-row gap-16 mt-4 ">
+            <div className="w-full flex flex-col justify-between md:flex-row lg:gap-16 gap-6 mt-4 ">
                 <div className="flex gap-3">
-                    <div className="w-full md:w-[400px] lg:w-[500px] flex flex-col gap-3">
+                    <div className="w-full md:w-[350px] lg:w-[500px] flex flex-col gap-3">
                         <img
                             className="w-full h-auto max-h-[500px] object-contain rounded-lg"
                             src={product.image}
@@ -39,7 +39,7 @@ const Products = () => {
                 </div>
 
 
-                <div className="text-sm w-full md:w-1/2">
+                <div className="text-sm w-full md:w-1/2 ">
                     <h1 className="text-3xl text-[var(--color-accent)] font-medium">{product.name}</h1>
 
                     <div className="mt-6">

@@ -9,6 +9,7 @@ import Booking from './Pages/Booking'
 import PopUpBanner from './Components/PopUpBanner'
 import Packages from './Pages/Packages'
 import Products from './Pages/Products'
+import Contact from './Pages/Contact'
 
 
 const App = () => {
@@ -23,6 +24,7 @@ const App = () => {
         <Route path="/booking" element={<Booking />} />
         <Route path="/package" element={<Packages />} />
         <Route path="/product/:id" element={<Products />} />
+        <Route path="/contact" element={<Contact />} />
       </Routes>
       <Footer />
       
