@@ -2,7 +2,7 @@ const products = [
   {
     id: 1,
     name: "Facial",
-    description: "Deep cleansing and nourishing treatment for glowing skin.",
+    description: "Deep cleansing and nourishing treatment for glowing skin. Deep cleansing and nourishing treatment for glowing skin.Deep cleansing and nourishing treatment for glowing skin.Deep cleansing and nourishing treatment for glowing skin.Deep cleansing and nourishing treatment for glowing skin.Deep cleansing and nourishing treatment for glowing skin.Deep cleansing and nourishing treatment for glowing skin.Deep cleansing and nourishing treatment for glowing skin.Deep cleansing and nourishing treatment for glowing skin.Deep cleansing and nourishing treatment for glowing skin.Deep cleansing and nourishing treatment for glowing skin.Deep cleansing and nourishing treatment for glowing skin.",
     category: "Skin",
     time: 45,
     price: 1200,

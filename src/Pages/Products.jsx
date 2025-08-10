@@ -30,9 +30,7 @@ const Products = () => {
 
 
                 <div className="text-sm w-full md:w-1/2">
-                    <h1 className="text-3xl font-medium">{product.name}</h1>
-
-
+                    <h1 className="text-3xl text-[var(--color-accent)] font-medium">{product.name}</h1>
 
                     <div className="mt-6">
                         <p className="text-gray-500/70 line-through">MRP: ₹{product.price}</p>
@@ -41,7 +39,7 @@ const Products = () => {
                     </div>
 
                     <p className="text-base font-medium mt-6">About Product</p>
-                    <ul className="list-disc ml-4 text-gray-500/70">
+                    <ul className="list-disc text-gray-500/70">
                         {product.description}
                     </ul>
 

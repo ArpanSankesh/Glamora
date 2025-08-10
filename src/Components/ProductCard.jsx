@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useCart } from '../context/cartContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,7 +30,7 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
                     <p className="text-[var(--color-secondary)] font-semibold text-xl  ">{name}</p>
                     <p className='text-[var(--color-secondary)]  w-15'>{time} min</p>
                 </div>
-                <p className="text-gray-700  text-sm ">{description}</p>
+                <p className="text-gray-700 line-clamp-3 text-sm">{description}</p>
 
                 <div className="flex items-end justify-between mt-3">
                     <p className="md:text-xl text-base font-medium text-[var(--color-secondary)]">
