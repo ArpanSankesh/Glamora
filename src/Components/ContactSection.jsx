@@ -8,7 +8,7 @@ const ContactSection = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const phoneNumber = '919572495969'; 
+    const phoneNumber = '919288302255'; 
 
     const text = `Hello! 👋\n\nName: ${name}\nEmail: ${email}\nMessage: ${message}`;
     const encodedText = encodeURIComponent(text);

@@ -10,13 +10,17 @@ import PopUpBanner from './Components/PopUpBanner'
 import Packages from './Pages/Packages'
 import Products from './Pages/Products'
 import Contact from './Pages/Contact'
+import PrivacyPolicy from './Pages/PrivacyPolicy';
+import TermsAndConditions from './Pages/TermsAndConditions';
+import ScrollToTop from './Components/ScrollToTop'
 
 
 const App = () => {
   return (
     <>
       <NavBar />
-    {/* <PopUpBanner /> */}
+      <ScrollToTop />
+      {/* <PopUpBanner /> */}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />
@@ -25,9 +29,10 @@ const App = () => {
         <Route path="/package" element={<Packages />} />
         <Route path="/product/:id" element={<Products />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
       </Routes>
       <Footer />
-      
     </>
   )
 }

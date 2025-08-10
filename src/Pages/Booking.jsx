@@ -36,7 +36,7 @@ ${cartItems.map(item => `• ${item.name} - ₹${item.offerPrice}`).join("\n")}
 `.trim();
 
 
-        const whatsappNumber = "919572495969";
+        const whatsappNumber = "919288302255";
         const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
         window.open(url, "_blank");
