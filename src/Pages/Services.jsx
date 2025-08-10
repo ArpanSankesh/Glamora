@@ -23,8 +23,6 @@ const Services = () => {
                         offerPrice={service.offerPrice}
                         image={service.image}
                     />
-
-
                 ))}
 
             </div>

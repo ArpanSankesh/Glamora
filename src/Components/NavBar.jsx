@@ -41,15 +41,15 @@ const NavBar = () => {
         : 'bg-[var(--color-text)] text-[var(--color-accent)]'}
     `}>
       {/* Logo */}
-      <button onClick={() => handleNavClick('home')} className="text-2xl font-bold transition">PrettyNbeauty</button>
+      <button onClick={() => handleNavClick('home')} className="cursor-pointer text-2xl font-bold transition">PrettyNbeauty</button>
 
       {/* Desktop Menu */}
-      <div className='hidden md:flex items-center gap-10'>
+      <div className='hidden md:flex items-center gap-10 '>
         {['home', 'services', 'about', 'contact'].map(link => (
           <button
             key={link}
             onClick={() => handleNavClick(link)}
-            className="font-medium hover:text-[var(--color-accent)] transition"
+            className="font-medium hover:text-[var(--color-accent)] transition cursor-pointer"
           >
             {link.charAt(0).toUpperCase() + link.slice(1)}
           </button>
@@ -79,12 +79,12 @@ const NavBar = () => {
       {/* Mobile Menu */}
       <div className={`fixed top-[70px] left-0 w-full bg-white p-6 z-10 transition-all md:hidden 
         ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
-        <ul className="flex flex-col space-y-4 text-lg text-[var(--color-accent)] font-medium">
+        <ul className="flex flex-col space-y-4 text-lg text-[var(--color-accent)] font-medium ">
           {['home', 'services', 'about', 'contact'].map(link => (
             <li key={link}>
               <button
                 onClick={() => handleNavClick(link)}
-                className="text-left w-full"
+                className="text-left w-full cursor-pointer"
               >
                 {link.charAt(0).toUpperCase() + link.slice(1)}
               </button>

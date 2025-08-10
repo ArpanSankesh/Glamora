@@ -1,23 +1,27 @@
 import React, { useState } from 'react'
 import { useCart } from '../context/cartContext';
+import { useNavigate } from 'react-router-dom';
 
-const ProductCard = ({ id, name, description, categry, time, price, offerPrice, image, }) => {
+const ProductCard = ({ id, name, description, category, time, price, offerPrice, image, }) => {
     const { addToCart, removeFromCart, isInCart } = useCart();
+    const navigate = useNavigate();
 
-
-    const handleClick = () => {
+    const handleCart = () => {
         if (isInCart(id)) {
             removeFromCart(id);
         } else {
-            addToCart({ id, name, description, categry, time, price, offerPrice, image, quantity: 1 });
+            addToCart({ id, name, description, category, time, price, offerPrice, image, quantity: 1 });
         }
+    };
+    const handleClick = () => {
+        navigate(`/product/${id}`);
     };
 
     return (
         <div className="border border-[var(--color-secondary)] rounded-md bg-white 
                         lg:min-w-60 lg:max-w-90 md:max-w-80 max-w-90 w-full
-                        flex flex-col justify-between h-[420px]">
-            <div className="group cursor-pointer flex items-center justify-center h-60 w-full bg-cover bg-center rounded-t-md"
+                        flex flex-col justify-between h-[420px] hover:scale-105 transition-all">
+            <div onClick={handleClick} className="group cursor-pointer flex items-center justify-center h-60 w-full bg-cover bg-center rounded-t-md"
                 style={{ backgroundImage: `url(${image})` }}>
 
             </div>
@@ -34,7 +38,7 @@ const ProductCard = ({ id, name, description, categry, time, price, offerPrice, 
                     </p>
                     <div className="text-[var(--color-secondary)]">
                         <button
-                            onClick={handleClick}
+                            onClick={handleCart}
                             className={`cursor-pointer flex items-center justify-center gap-1 md:w-[80px] w-[64px] h-[34px] rounded font-medium transition-all
                                 ${isInCart(id)
                                     ? 'bg-[var(--color-opaque)] border border-[var(--color-secondary)] text-[var(--color-accent)]'
