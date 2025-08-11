@@ -44,18 +44,20 @@ const NavBar = () => {
       <button onClick={() => handleNavClick('home')} className="cursor-pointer text-2xl font-bold transition">PrettyNbeauty</button>
 
       {/* Desktop Menu */}
+      <div className='flex items-center gap-5'>
       <div className='hidden md:flex items-center gap-10 '>
         {['home', 'services', 'about', 'contact'].map(link => (
           <button
-            key={link}
+          key={link}
             onClick={() => handleNavClick(link)}
             className="font-medium hover:text-[var(--color-accent)] transition cursor-pointer"
-          >
+            >
             {link.charAt(0).toUpperCase() + link.slice(1)}
           </button>
         ))}
 
         {/* Cart Icon */}
+      </div>
         <div className="relative cursor-pointer" onClick={() => navigate('/booking')}>
           <FontAwesomeIcon icon={faShoppingCart} className="text-2xl text-[var(--color-accent)]" />
           {cartItems.length > 0 && (
@@ -64,19 +66,20 @@ const NavBar = () => {
             </span>
           )}
         </div>
-      </div>
 
       {/* Mobile Menu Button */}
       <button
         aria-label="menu-btn"
         type="button"
-        className="inline-block md:hidden active:scale-90 transition"
+        className="text-2xl inline-block md:hidden active:scale-90 transition"
         onClick={toggleMobileMenu}
-      >
+        >
         <FontAwesomeIcon icon={faBars} />
       </button>
+      </div>
 
       {/* Mobile Menu */}
+      
       <div className={`fixed top-[70px] left-0 w-full bg-white p-6 z-10 transition-all md:hidden 
         ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
         <ul className="flex flex-col space-y-4 text-lg text-[var(--color-accent)] font-medium ">
@@ -98,13 +101,6 @@ const NavBar = () => {
               }}
               className="flex items-center gap-2"
             >
-              <FontAwesomeIcon icon={faShoppingCart} />
-              Cart
-              {cartItems.length > 0 && (
-                <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs text-white bg-[var(--color-accent)] rounded-full">
-                  {cartItems.length}
-                </span>
-              )}
             </button>
           </li>
         </ul>

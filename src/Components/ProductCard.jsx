@@ -2,7 +2,7 @@ import React from 'react'
 import { useCart } from '../context/cartContext';
 import { useNavigate } from 'react-router-dom';
 
-const ProductCard = ({ id, name, description, category, time, price, offerPrice, image, }) => {
+const ProductCard = ({ id, name, description, category, time, price, offerPrice, image, viewType }) => {
     const { addToCart, removeFromCart, isInCart } = useCart();
     const navigate = useNavigate();
 
@@ -14,7 +14,7 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
         }
     };
     const handleClick = () => {
-        navigate(`/product/${id}`);
+        navigate(`/product/${viewType}/${id}`);
     };
 
     return (

@@ -27,7 +27,7 @@ const Footer = () => {
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 flex items-start md:justify-end gap-20 md:gap-10">
+        <div className="flex flex-col-reverse sm:flex-row items-start justify-center md:justify-end gap-10">
           <div>
       <h2 className="font-semibold mb-5">Quick Links</h2>
       <ul className="text-sm space-y-2">
