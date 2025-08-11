@@ -8,7 +8,6 @@ const Products = () => {
   const { type, id } = useParams();
   const { addToCart, removeFromCart, isInCart } = useCart();
 
-  // Select the correct dataset
   const dataset = type === "services" ? services : type === "packages" ? packages : [];
   const product = dataset.find((item) => String(item.id) === String(id));
 
