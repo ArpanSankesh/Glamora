@@ -34,12 +34,13 @@ const NavBar = () => {
   }
 
   return (
-    <nav className={`fixed top-0 left-0 w-full h-[70px] z-20 transition-all 
+    <nav className={`fixed top-0  left-0 w-full h-[70px] z-20 transition-all 
       px-6 md:px-16 lg:px-24 flex items-center justify-between 
       ${isHomePage && !isScrolled
         ? 'bg-transparent text-[var(--color-text)]'
         : 'bg-[var(--color-text)] text-[var(--color-accent)]'}
-    `}>
+        `}>
+      
       {/* Logo */}
       <button onClick={() => handleNavClick('home')} className="cursor-pointer text-2xl font-bold transition">PrettyNbeauty</button>
 
@@ -88,7 +89,7 @@ const NavBar = () => {
               <button
                 onClick={() => handleNavClick(link)}
                 className="text-left w-full cursor-pointer"
-              >
+                >
                 {link.charAt(0).toUpperCase() + link.slice(1)}
               </button>
             </li>

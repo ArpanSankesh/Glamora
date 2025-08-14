@@ -10,7 +10,7 @@ const Footer = () => {
         {/* Logo + About */}
         <div className="md:max-w-96">
           <div className="flex items-center gap-2">
-            <img alt="PrettyNbeauty Logo" className="h-11" src="assets/logo_Croped.jpg" />
+            <img alt="PrettyNbeauty Logo" className="h-11" src="/assets/logo_Croped.jpg" />
             <h1 className="text-3xl font-bold">PrettyNbeauty</h1>
           </div>
           <p className="mt-6 text-sm">

@@ -22,7 +22,7 @@ const Booking = () => {
         const total = cartItems.reduce((sum, item) => sum + (item.offerPrice * (item.quantity || 1)), 0);
 
         const message = `
- Booking Request
+Booking Request
 
 👤 Name: ${name}
 📞 Phone: ${phone}
@@ -30,10 +30,17 @@ const Booking = () => {
 ⏰ Time: ${time}
 
 💅 Services:
-${cartItems.map(item => `• ${item.name} - ₹${item.offerPrice}`).join("\n")}
+${cartItems.map(item =>
+            item.services
+                ? `${item.name}:\n${item.services.map(s => `   • ${s.name} - ₹${s.price}`).join("\n")}`
+                : `• ${item.name} - ₹${item.price}`
+        ).join("\n")}
 
-💰 Total Amount: ₹${total}
+💰 Total Amount: ₹${cartItems.reduce((sum, item) =>
+            sum + (item.services ? item.services.reduce((a, b) => a + b.price, 0) : item.price)
+            , 0)}
 `.trim();
+
 
 
         const whatsappNumber = "919288302255";
@@ -58,28 +65,30 @@ ${cartItems.map(item => `• ${item.name} - ₹${item.offerPrice}`).join("\n")}
                 </div>
 
                 {cartItems.map((product, index) => (
-                    <div key={index} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3">
-                        <div className="flex items-center md:gap-6 gap-3">
-                            <div className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden ">
-                                <img
-                                    className="max-w-full h-full object-cover"
-                                    src={product.image}
-                                    alt={product.name}
-                                />
+                    <div key={index} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-start text-sm md:text-base font-medium pt-3">
+                        <div className="flex flex-col md:flex-row items-start md:items-center md:gap-6 gap-3">
+                            <div className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden">
+                                <img className="max-w-full h-full object-cover" src={product.image} alt={product.name} />
                             </div>
                             <div>
-                                <p className="hidden md:block font-semibold">{product.name}</p>
-                                <p className="hidden md:block font-semibold">{product.time} min</p>
+                                <p className="font-semibold">{product.name}</p>
+                                {product.services && product.services.length > 0 && (
+                                    <ul className="text-gray-600 text-sm mt-1">
+                                        {product.services.map((s) => (
+                                            <li key={s.id}>• {s.name}</li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         </div>
-                        <p className="text-center">₹{product.offerPrice * product.quantity}</p>
+                        <p className="text-center">₹{product.price}</p>
                         <button onClick={() => removeFromCart(product.id)} className="cursor-pointer mx-auto">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="m12.5 7.5-5 5m0-5 5 5m5.833-2.5a8.333 8.333 0 1 1-16.667 0 8.333 8.333 0 0 1 16.667 0" stroke="#FF532E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                            ❌
                         </button>
-                    </div>)
-                )}
+                    </div>
+                ))}
+
+
 
                 <button onClick={() => (navigate('/services'))} className="group cursor-pointer flex items-center mt-8 gap-2 text-[var(--color-accent)] font-medium">
                     Continue Shopping

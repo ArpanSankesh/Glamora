@@ -17,6 +17,7 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
         navigate(`/product/${viewType}/${id}`);
     };
 
+
     return (
         <div className="border border-[var(--color-secondary)] rounded-md bg-white 
                         lg:min-w-60 lg:max-w-90 md:max-w-80 max-w-90 w-full
