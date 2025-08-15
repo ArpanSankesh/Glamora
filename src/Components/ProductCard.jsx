@@ -1,5 +1,5 @@
 import React from 'react'
-import { useCart } from '../context/cartContext';
+import { useCart } from '../context/CartContext'
 import { useNavigate } from 'react-router-dom';
 
 const ProductCard = ({ id, name, description, category, time, price, offerPrice, image, viewType }) => {
@@ -13,6 +13,7 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
             addToCart({ id, name, description, category, time, price, offerPrice, image, quantity: 1 });
         }
     };
+
     const handleClick = () => {
         navigate(`/product/${viewType}/${id}`);
     };

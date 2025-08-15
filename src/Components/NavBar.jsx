@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faShoppingCart, faBars } from '@fortawesome/free-solid-svg-icons'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useCart } from '../context/cartContext'
+import { useCart } from '../context/CartContext'
 
 const NavBar = () => {
   const location = useLocation()

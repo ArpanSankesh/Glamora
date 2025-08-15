@@ -2,7 +2,7 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import services from "../data/servicesData";
 import packages from "../data/packageData";
-import { useCart } from "../context/cartContext";
+import { useCart } from "../context/CartContext"
 
 const Products = () => {
   const { type, id } = useParams();

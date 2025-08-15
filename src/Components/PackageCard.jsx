@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const PackageCard = ({ id, name, description, category, time, price, offerPrice, image }) => {
+const PackageCard = ({ id, name, description, category, time, price, image }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {

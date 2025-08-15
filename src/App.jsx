@@ -21,6 +21,7 @@ const App = () => {
     <>
       <NavBar />
       <ScrollToTop />
+      
       {/* <PopUpBanner /> */}
       {/* <Banner /> */}
       <Routes>
@@ -30,7 +31,7 @@ const App = () => {
         <Route path="/booking" element={<Booking />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/product/:type/:id" element={<Products />} />
-        <Route path="/package/:id" element={<PackageDetails />} />
+       <Route path="/package/:id" element={<PackageDetails />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
       </Routes>
