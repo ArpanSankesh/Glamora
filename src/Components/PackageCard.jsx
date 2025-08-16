@@ -12,30 +12,35 @@ const PackageCard = ({ id, name, description, category, time, offerPrice, image 
     <div
       onClick={handleClick}
       className="border border-[var(--color-secondary)] rounded-md bg-white 
-                 lg:min-w-60 lg:max-w-90 md:max-w-80 max-w-90 w-full
-                 flex flex-col justify-between h-[420px] hover:scale-105 transition-all cursor-pointer"
+                 w-full max-w-90
+                 flex flex-row items-center justify-between md:flex-col   /* row on mobile, col on md+ */
+                 hover:scale-105 transition-all cursor-pointer"
     >
-      {/* Image */}
+      {/* IMAGE */}
       <div
-        className="group flex items-center justify-center h-60 w-full bg-cover bg-center rounded-t-md"
+        className="flex-shrink-0 
+                   w-32 h-32 md:w-full md:h-60 ml-3 lg:ml-0
+                   bg-cover bg-center md:rounded-t-md"
         style={{ backgroundImage: `url(${image})` }}
-      ></div>
+      />
 
-      {/* Package Info */}
-      <div className="p-5 text-gray-500/60 text-sm flex flex-col justify-between h-[180px]">
+      {/* CONTENT */}
+      <div className="p-4 flex flex-col justify-between text-gray-500/60 text-sm flex-1">
         <div>
-          <div className='flex justify-between items-center mb-2'>
-            <p className="text-[var(--color-secondary)] font-semibold text-xl">{name}</p>
-            <p className='text-[var(--color-secondary)] text-sm'>{time}</p>
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-[var(--color-secondary)] font-semibold text-md md:text-xl">{name}</p>
+            <p className="text-[var(--color-secondary)] text-xs md:text-base">{time}</p>
           </div>
           {category && (
-            <p className="text-[var(--color-accent)] font-medium text-sm mb-1">{category}</p>
+            <p className="text-[var(--color-accent)] font-medium text-xs md:text-sm mb-1">
+              {category}
+            </p>
           )}
           <p className="text-gray-700 line-clamp-3 text-sm">{description}</p>
         </div>
 
-        <div className="flex items-end justify-between mt-4">
-          <p className="md:text-xl text-base font-medium text-[var(--color-secondary)]">
+        <div className="flex items-center justify-between mt-3">
+          <p className="text-base md:text-xl font-medium text-[var(--color-secondary)]">
             ₹{offerPrice}
           </p>
         </div>
