@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const PackageCard = ({ id, name, description, category, time, price, image }) => {
+const PackageCard = ({ id, name, description, category, time, offerPrice, image }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -36,7 +36,7 @@ const PackageCard = ({ id, name, description, category, time, price, image }) =>
 
         <div className="flex items-end justify-between mt-4">
           <p className="md:text-xl text-base font-medium text-[var(--color-secondary)]">
-            ₹{price}
+            ₹{offerPrice}
           </p>
         </div>
       </div>

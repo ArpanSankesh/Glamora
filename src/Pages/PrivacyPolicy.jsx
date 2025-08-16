@@ -50,7 +50,7 @@ const PrivacyPolicy = () => {
       <p className="mt-10">
         If you have any questions, please contact us at:
         <br />
-        <strong>Email:</strong> contact@example.com
+        <strong>Email:</strong> bookingprettynbeauty@gmail.com
       </p>
     </div>
   );

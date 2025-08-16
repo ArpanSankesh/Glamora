@@ -1,9 +1,9 @@
 // packageData.js
 const packageData = [
   {
-    id: 1,
+    id: 100,
     name: "Any 4 Basic Services",
-    price: 999,
+    offerPrice: "999",
     description: "Choose any 4 services from our basic service list at a special package price.",
     category: "Basic",
     time: "Varies",

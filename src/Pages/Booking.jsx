@@ -8,41 +8,77 @@ const Booking = () => {
     const [phone, setPhone] = React.useState('');
     const [date, setDate] = React.useState('');
     const [time, setTime] = React.useState('');
+    const [address, setAddress] = React.useState('');
 
     const { cartItems, removeFromCart } = useCart();
 
     const handleBookingSubmit = (e) => {
         e.preventDefault();
 
-        if (!name || !phone || !date || !time || cartItems.length === 0) {
+        if (!name || !phone || !date || !time || !address || cartItems.length === 0) {
             alert("Please fill in all fields and add at least one package.");
             return;
         }
 
-        // Total = sum of package prices only
-        const total = cartItems.reduce((sum, item) => sum + item.price, 0);
+        // ✅ Always pick offerPrice if available, else price
+        const total = cartItems.reduce((sum, item) => {
+            const price = item.offerPrice !== undefined ? Number(item.offerPrice) : Number(item.price) || 0;
+            return sum + price;
+        }, 0);
 
-        // Construct WhatsApp message
-        const message = `Booking Request
+        // ✅ Total Duration
+        const totalDuration = cartItems.reduce((sum, item) => {
+            if (item.services && item.services.length > 0) {
+                return sum + item.services.reduce((s, service) => s + (service.duration || 0), 0);
+            }
+            return sum + (item.duration || 0);
+        }, 0);
 
-👤 Name: ${name}
-📞 Phone: ${phone}
-📅 Date: ${date}
-⏰ Time: ${time}
+        // ✅ WhatsApp Message Format
+        const message = `SERVICES:
+${cartItems.map((item) => {
+    if (item.services && item.services.length > 0) {
+        return `${item.name}
+Total Duration: ${item.duration || "Varies"}
+${item.services.map((s) => `• ${s.name}${s.duration ? ` (${s.duration} mins)` : ""}`).join("\n")}`;
+    } else {
+        return `${item.name} : ₹ ${item.offerPrice !== undefined ? item.offerPrice : item.price}`;
+    }
+}).join("\n\n")}
 
-💅 Services:
-${cartItems.map(item =>
-  item.services
-    ? `${item.name}:\n${item.services.map(s => `   • ${s.name}`).join("\n")}`
-    : `• ${item.name}`
-).join("\n")}
+Client Name:
+${name}
 
-💰 Total Amount: ₹${total}`;
+Address:
+${address}
+
+Phone: ${phone}
+
+Appointment Date: ${date}
+Appointment Time: ${time}
+
+Total Billing Amount: ${total} INR
+
+Service Duration:
+${totalDuration} MIN`;
 
         const whatsappNumber = "919288302255";
-const encodedMessage = encodeURIComponent(message);
-const url = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+        const encodedMessage = encodeURIComponent(message);
+        const url = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
         window.open(url, "_blank");
+
+        // ✅ Clear cart after booking
+        cartItems.forEach((item) => removeFromCart(item.id));
+
+        // ✅ Optionally reset form
+        setName('');
+        setPhone('');
+        setDate('');
+        setTime('');
+        setAddress('');
+
+        alert("Your booking has been placed! Cart cleared.");
+        navigate('/');
     };
 
     return (
@@ -76,7 +112,8 @@ const url = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
                                 )}
                             </div>
                         </div>
-                        <p className="text-center">₹{product.price}</p>
+                        
+                        <p className="text-center">₹{product.offerPrice !== undefined ? product.offerPrice : product.price}</p>
                         <button onClick={() => removeFromCart(product.id)} className="cursor-pointer mx-auto">
                             ❌
                         </button>
@@ -111,6 +148,17 @@ const url = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             className="w-full mt-1 p-2 border border-gray-300 rounded"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-sm text-gray-700">Address</label>
+                        <textarea
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            className="w-full mt-1 p-2 border border-gray-300 rounded"
+                            rows={3}
                             required
                         />
                     </div>

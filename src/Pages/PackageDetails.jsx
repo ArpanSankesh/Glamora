@@ -46,7 +46,7 @@ const PackageDetails = () => {
     const product = {
       id: pkgData.id,
       name: pkgData.name,
-      price: pkgData.price,
+      price: pkgData.offerPrice,
       image: pkgData.image,
       services: pkgData.services.filter((s) => selectedServices.includes(s.id)), 
     };
@@ -74,7 +74,7 @@ const PackageDetails = () => {
       <p className="mb-2">{pkgData.description}</p>
       <p className="font-semibold text-lg mb-6">
         Price:{" "}
-        <span className="text-[var(--color-accent)]">₹{pkgData.price}</span>
+        <span className="text-[var(--color-accent)]">₹{pkgData.offerPrice}</span> 
       </p>
 
       {/* Services selection */}
