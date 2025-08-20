@@ -10,7 +10,7 @@ const Booking = () => {
     const [time, setTime] = React.useState('');
     const [address, setAddress] = React.useState('');
 
-    const { cartItems, removeFromCart } = useCart();
+    const { cartItems, removeFromCart, updateQuantity } = useCart();
 
     const handleBookingSubmit = (e) => {
         e.preventDefault();
@@ -20,29 +20,34 @@ const Booking = () => {
             return;
         }
 
-        // ✅ Always pick offerPrice if available, else price
+        // ✅ Total Price
         const total = cartItems.reduce((sum, item) => {
-            const price = item.offerPrice !== undefined ? Number(item.offerPrice) : Number(item.price) || 0;
-            return sum + price;
+            const price = item.offerPrice ?? item.price ?? 0;
+            const quantity = item.quantity ?? 1;
+            return sum + price * quantity;
         }, 0);
 
         // ✅ Total Duration
         const totalDuration = cartItems.reduce((sum, item) => {
+            const quantity = item.quantity ?? 1;
             if (item.services && item.services.length > 0) {
-                return sum + item.services.reduce((s, service) => s + (service.duration || 0), 0);
+                const serviceSum = item.services.reduce((s, service) => s + (service.duration ?? 0), 0);
+                return sum + serviceSum * quantity;
+            } else {
+                return sum + (item.duration ?? 0) * quantity;
             }
-            return sum + (item.duration || 0);
         }, 0);
 
-        // ✅ WhatsApp Message Format
+        // ✅ WhatsApp Message
         const message = `SERVICES:
 ${cartItems.map((item) => {
+    const quantity = item.quantity ?? 1;
     if (item.services && item.services.length > 0) {
-        return `${item.name}
-Total Duration: ${item.duration || "Varies"}
+        return `${item.name} x ${quantity}
+Total Duration: ${item.duration ?? "Varies"}
 ${item.services.map((s) => `• ${s.name}${s.duration ? ` (${s.duration} mins)` : ""}`).join("\n")}`;
     } else {
-        return `${item.name} : ₹ ${item.offerPrice !== undefined ? item.offerPrice : item.price}`;
+        return `${item.name} x ${quantity} : ₹ ${item.offerPrice ?? item.price ?? 0}`;
     }
 }).join("\n\n")}
 
@@ -70,7 +75,7 @@ ${totalDuration} MIN`;
         // ✅ Clear cart after booking
         cartItems.forEach((item) => removeFromCart(item.id));
 
-        // ✅ Optionally reset form
+        // ✅ Reset form
         setName('');
         setPhone('');
         setDate('');
@@ -95,14 +100,26 @@ ${totalDuration} MIN`;
                     <p className="text-center">Action</p>
                 </div>
 
-                {cartItems.map((product, index) => (
-                    <div key={index} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-start text-sm md:text-base font-medium pt-3">
+                {cartItems.map((product) => (
+                    <div key={product.id} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-start text-sm md:text-base font-medium pt-3">
                         <div className="flex flex-col md:flex-row items-start md:items-center md:gap-6 gap-3">
                             <div className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden">
                                 <img className="max-w-full h-full object-cover" src={product.image} alt={product.name} />
                             </div>
                             <div>
                                 <p className="font-semibold">{product.name}</p>
+                                <div className='flex items-center mt-2'>
+                                    <span className="mr-2">Qty:</span>
+                                    <select
+                                        value={product.quantity || 1}
+                                        onChange={e => updateQuantity(product.id, Number(e.target.value))}
+                                        className='outline-none border rounded px-2 py-1'
+                                    >
+                                        {[...Array(10)].map((_, idx) => (
+                                            <option key={idx + 1} value={idx + 1}>{idx + 1}</option>
+                                        ))}
+                                    </select>
+                                </div>
                                 {product.services && product.services.length > 0 && (
                                     <ul className="text-gray-600 text-sm mt-1">
                                         {product.services.map((s) => (
@@ -113,16 +130,36 @@ ${totalDuration} MIN`;
                             </div>
                         </div>
                         
-                        <p className="text-center">₹{product.offerPrice !== undefined ? product.offerPrice : product.price}</p>
-                        <button onClick={() => removeFromCart(product.id)} className="cursor-pointer mx-auto">
+                        {/* Price */}
+                        <p className="text-center">
+                            ₹{(product.offerPrice !== undefined ? product.offerPrice : product.price) * (product.quantity || 1)}
+                        </p>
+
+                        {/* Remove */}
+                        <button
+                            onClick={() => removeFromCart(product.id)}
+                            className="text-red-500 text-sm mx-auto"
+                        >
                             ❌
                         </button>
                     </div>
                 ))}
 
+                
+                
+
                 <button onClick={() => navigate('/services')} className="group cursor-pointer flex items-center mt-8 gap-2 text-[var(--color-accent)] font-medium">
                     Continue Shopping
                 </button>
+                <div className="flex  mt-6">
+                    <p className="text-lg font-semibold">
+                        Total: ₹{cartItems.reduce((sum, item) => {
+                            const price = item.offerPrice ?? item.price ?? 0;
+                            const quantity = item.quantity ?? 1;
+                            return sum + price * quantity;
+                        }, 0)}
+                    </p>
+                </div>
             </div>
 
             {/* Booking Form */}

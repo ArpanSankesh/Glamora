@@ -8,7 +8,12 @@ const Products = () => {
   const { type, id } = useParams();
   const { addToCart, removeFromCart, isInCart } = useCart();
 
-  const dataset = type === "services" ? services : type === "packages" ? packages : [];
+  const dataset =
+    type === "services" || type === "service"
+      ? services
+      : type === "packages" || type === "package"
+      ? packages
+      : [];
   const product = dataset.find((item) => String(item.id) === String(id));
 
   if (!product) {

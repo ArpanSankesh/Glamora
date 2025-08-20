@@ -22,6 +22,7 @@ const FeaturedServices = () => {
             price={service.price}
             offerPrice={service.offerPrice}
             image={service.image}
+            viewType="service"
           />
         ))}
       </div>
