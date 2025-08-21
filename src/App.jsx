@@ -14,6 +14,7 @@ import TermsAndConditions from './Pages/TermsAndConditions';
 import ScrollToTop from './Components/ScrollToTop'
 import Banner from './Components/banner'
 import PackageDetails from './Pages/PackageDetails'
+import Offers from './Pages/Offers'
 
 
 const App = () => {
@@ -31,6 +32,7 @@ const App = () => {
         <Route path="/booking" element={<Booking />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/product/:type/:id" element={<Products />} />
+        <Route path="/offers" element={<Offers />} />
        <Route path="/package/:id" element={<PackageDetails />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />

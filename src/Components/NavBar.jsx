@@ -34,7 +34,7 @@ const NavBar = () => {
   }
 
   return (
-    <nav className={`fixed top-0  left-0 w-full h-[70px] z-20 transition-all 
+    <nav className={`fixed top-0 left-0 w-full h-[70px] z-20 transition-all 
       px-6 md:px-16 lg:px-24 flex items-center justify-between 
       ${isHomePage && !isScrolled
         ? 'bg-transparent text-[var(--color-text)]'
@@ -46,19 +46,19 @@ const NavBar = () => {
 
       {/* Desktop Menu */}
       <div className='flex items-center gap-5'>
-      <div className='hidden md:flex items-center gap-10 '>
-        {['home', 'services', 'about', 'contact'].map(link => (
-          <button
-          key={link}
-            onClick={() => handleNavClick(link)}
-            className="font-medium hover:text-[var(--color-accent)] transition cursor-pointer"
+        <div className='hidden md:flex items-center gap-10 '>
+          {['home', 'services', 'offers', 'about', 'contact'].map(link => (
+            <button
+              key={link}
+              onClick={() => handleNavClick(link)}
+              className="font-medium hover:text-[var(--color-accent)] transition cursor-pointer"
             >
-            {link.charAt(0).toUpperCase() + link.slice(1)}
-          </button>
-        ))}
+              {link.charAt(0).toUpperCase() + link.slice(1)}
+            </button>
+          ))}
+        </div>
 
         {/* Cart Icon */}
-      </div>
         <div className="relative cursor-pointer" onClick={() => navigate('/booking')}>
           <FontAwesomeIcon icon={faShoppingCart} className="text-2xl text-[var(--color-accent)]" />
           {cartItems.length > 0 && (
@@ -68,28 +68,27 @@ const NavBar = () => {
           )}
         </div>
 
-      {/* Mobile Menu Button */}
-      <button
-        aria-label="menu-btn"
-        type="button"
-        className="text-2xl inline-block md:hidden active:scale-90 transition"
-        onClick={toggleMobileMenu}
+        {/* Mobile Menu Button */}
+        <button
+          aria-label="menu-btn"
+          type="button"
+          className="text-2xl inline-block md:hidden active:scale-90 transition"
+          onClick={toggleMobileMenu}
         >
-        <FontAwesomeIcon icon={faBars} />
-      </button>
+          <FontAwesomeIcon icon={faBars} />
+        </button>
       </div>
 
       {/* Mobile Menu */}
-      
       <div className={`fixed top-[70px] left-0 w-full bg-white p-6 z-10 transition-all md:hidden 
         ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
         <ul className="flex flex-col space-y-4 text-lg text-[var(--color-accent)] font-medium ">
-          {['home', 'services', 'about', 'contact'].map(link => (
+          {['home', 'services', 'offers', 'about', 'contact'].map(link => (
             <li key={link}>
               <button
                 onClick={() => handleNavClick(link)}
                 className="text-left w-full cursor-pointer"
-                >
+              >
                 {link.charAt(0).toUpperCase() + link.slice(1)}
               </button>
             </li>
@@ -102,6 +101,7 @@ const NavBar = () => {
               }}
               className="flex items-center gap-2"
             >
+              Booking
             </button>
           </li>
         </ul>

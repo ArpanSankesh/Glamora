@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext'
+import offers from '../data/offersData'; // ✅ import offers list
 
 const Booking = () => {
     const navigate = useNavigate();
@@ -10,7 +11,43 @@ const Booking = () => {
     const [time, setTime] = React.useState('');
     const [address, setAddress] = React.useState('');
 
+    const [couponCode, setCouponCode] = React.useState('');
+    const [discount, setDiscount] = React.useState(0);
+
     const { cartItems, removeFromCart, updateQuantity } = useCart();
+
+    // ✅ Calculate Subtotal
+    const subtotal = cartItems.reduce((sum, item) => {
+        const price = item.offerPrice ?? item.price ?? 0;
+        const quantity = item.quantity ?? 1;
+        return sum + price * quantity;
+    }, 0);
+
+    // ✅ Calculate Grand Total (after discount)
+    const total = Math.max(subtotal - discount, 0);
+
+    // ✅ Apply Coupon (from offersData.js)
+    const applyCoupon = () => {
+  const code = couponCode.trim().toUpperCase();
+  const found = offers.find((offer) => offer.coupon === code);
+
+  if (found) {
+    if (found.type === "percent") {
+      setDiscount((subtotal * found.discountValue) / 100);
+      alert(`✅ Coupon Applied: ${found.discountValue}% Off`);
+    } else if (found.type === "flat") {
+      if (found.minAmount && subtotal < found.minAmount) {
+        alert(`⚠️ Minimum order ₹${found.minAmount} required for this coupon.`);
+        return;
+      }
+      setDiscount(found.discountValue);
+      alert(`✅ Coupon Applied: ₹${found.discountValue} Off`);
+    }
+  } else {
+    setDiscount(0);
+    alert("❌ Invalid Coupon Code");
+  }
+};
 
     const handleBookingSubmit = (e) => {
         e.preventDefault();
@@ -19,13 +56,6 @@ const Booking = () => {
             alert("Please fill in all fields and add at least one package.");
             return;
         }
-
-        // ✅ Total Price
-        const total = cartItems.reduce((sum, item) => {
-            const price = item.offerPrice ?? item.price ?? 0;
-            const quantity = item.quantity ?? 1;
-            return sum + price * quantity;
-        }, 0);
 
         // ✅ Total Duration
         const totalDuration = cartItems.reduce((sum, item) => {
@@ -62,6 +92,8 @@ Phone: ${phone}
 Appointment Date: ${date}
 Appointment Time: ${time}
 
+Subtotal: ${subtotal} INR
+Discount: -${discount} INR
 Total Billing Amount: ${total} INR
 
 Service Duration:
@@ -81,6 +113,8 @@ ${totalDuration} MIN`;
         setDate('');
         setTime('');
         setAddress('');
+        setCouponCode('');
+        setDiscount(0);
 
         alert("Your booking has been placed! Cart cleared.");
         navigate('/');
@@ -145,21 +179,34 @@ ${totalDuration} MIN`;
                     </div>
                 ))}
 
-                
-                
+                {/* Coupon Input */}
+                <div className="mt-6 flex gap-2 w-50">
+                    <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="Enter Coupon Code"
+                        className="flex-1 p-2 border rounded"
+                    />
+                    <button
+                        type="button"
+                        onClick={applyCoupon}
+                        className="px-4 py-2 bg-[var(--color-accent)] text-white rounded"
+                    >
+                        Apply
+                    </button>
+                </div>
+
+                {/* Totals */}
+                <div className="flex flex-col gap-1 mt-6">
+                    <p className="text-lg font-semibold">Subtotal: ₹{subtotal}</p>
+                    {discount > 0 && <p className="text-green-600">Discount: -₹{discount.toFixed(0)}</p>}
+                    <p className="text-xl font-bold">Total: ₹{total}</p>
+                </div>
 
                 <button onClick={() => navigate('/services')} className="group cursor-pointer flex items-center mt-8 gap-2 text-[var(--color-accent)] font-medium">
                     Continue Shopping
                 </button>
-                <div className="flex  mt-6">
-                    <p className="text-lg font-semibold">
-                        Total: ₹{cartItems.reduce((sum, item) => {
-                            const price = item.offerPrice ?? item.price ?? 0;
-                            const quantity = item.quantity ?? 1;
-                            return sum + price * quantity;
-                        }, 0)}
-                    </p>
-                </div>
             </div>
 
             {/* Booking Form */}
