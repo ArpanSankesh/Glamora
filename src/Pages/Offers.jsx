@@ -1,11 +1,49 @@
-import React from "react";
-import  offers  from "../data/offersData";
+import React, { useState, useEffect } from "react";
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../config/firebaseConfig.js';
 
 const Offers = () => {
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const offersSnap = await getDocs(collection(db, 'offers'));
+        const offersData = offersSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          // Map Firebase fields to your original structure
+          coupon: doc.data().useCode,
+          bg: 'bg-pink-50', // You can customize this
+          text: 'text-pink-600' // You can customize this
+        }));
+
+        setOffers(offersData);
+      } catch (error) {
+        console.error('Error fetching offers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOffers();
+  }, []);
+
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     alert(`Coupon "${text}" copied! ✅`);
   };
+
+  if (loading) {
+    return (
+      <div className="py-28 px-6 max-w-5xl mx-auto">
+        <div className="flex justify-center items-center min-h-[200px]">
+          <p className="text-gray-500">Loading offers...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-28 px-6 max-w-5xl mx-auto">
