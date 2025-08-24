@@ -8,7 +8,6 @@ const Products = () => {
   const { type, id } = useParams();
   const { addToCart, removeFromCart, isInCart } = useCart();
   
-  // State management
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +24,6 @@ const Products = () => {
         setLoading(true);
         setError(null);
 
-        // Determine collection based on type
         let collectionName = "";
         if (type === "services" || type === "service") {
           collectionName = "services";
@@ -37,16 +35,22 @@ const Products = () => {
 
         console.log(`Fetching ${collectionName} with ID: ${id}`);
 
-        // Fetch document from Firebase
         const docRef = doc(db, collectionName, id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
+          const data = docSnap.data();
+          console.log('Raw Firebase product data:', { id: docSnap.id, data });
+
           const productData = {
             id: docSnap.id,
-            ...docSnap.data()
+            ...data,
+            // Handle multiple possible image field names
+            image: data.image || data.imageUrl || data.packageImageUrl || data.Image || data.ImageUrl,
+            imageUrl: data.imageUrl || data.image || data.packageImageUrl,
           };
-          console.log("Product found:", productData);
+          
+          console.log("Processed product data:", productData);
           setProduct(productData);
         } else {
           console.log("No document found!");
@@ -70,11 +74,27 @@ const Products = () => {
     if (isInCart(product.id)) {
       removeFromCart(product.id);
     } else {
-      addToCart({ ...product, quantity: 1 });
+      // Use the resolved image URL and ensure timing data is included
+      const productForCart = {
+        ...product,
+        image: product.image || product.imageUrl,
+        // Ensure timing data is preserved with multiple field names
+        duration: product.duration || product.time || product.Duration || product.Time,
+        time: product.time || product.duration || product.Time || product.Duration,
+        quantity: 1
+      };
+      
+      console.log('Adding product to cart with timing data:', {
+        name: productForCart.name,
+        duration: productForCart.duration,
+        time: productForCart.time,
+        originalProduct: product
+      });
+      
+      addToCart(productForCart);
     }
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="max-w-6xl w-full lg:py-36 lg:px-26 px-8 py-20">
@@ -88,7 +108,6 @@ const Products = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="max-w-6xl w-full lg:py-36 lg:px-26 px-8 py-20">
@@ -106,7 +125,6 @@ const Products = () => {
     );
   }
 
-  // Product not found
   if (!product) {
     return (
       <div className="max-w-6xl w-full lg:py-36 lg:px-26 px-8 py-20">
@@ -125,23 +143,41 @@ const Products = () => {
     );
   }
 
+  // Get the display image
+  const displayImage = product.image || product.imageUrl;
+  const hasValidImage = displayImage && 
+                       typeof displayImage === 'string' && 
+                       displayImage.trim() !== '' && 
+                       !['undefined', 'null', 'false'].includes(displayImage.toLowerCase());
+
   return (
     <div className="max-w-6xl w-full lg:py-36 lg:px-26 px-8 py-20">
       <div className="w-full flex flex-col justify-between md:flex-row lg:gap-16 gap-6 mt-4">
         {/* Product Image */}
         <div className="flex gap-3">
           <div className="w-full md:w-[350px] lg:w-[500px] flex flex-col gap-3">
-            {product.image ? (
+            {hasValidImage ? (
               <img
                 className="w-full h-auto max-h-[500px] object-contain rounded-lg"
-                src={product.image}
-                alt={product.name}
+                src={displayImage}
+                alt={product.name || 'Product'}
+                onError={(e) => {
+                  console.error('Product image failed to load:', displayImage);
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+                onLoad={() => console.log('Product image loaded successfully:', displayImage)}
               />
-            ) : (
-              <div className="w-full h-[300px] md:h-[400px] bg-gray-200 rounded-lg flex items-center justify-center">
-                <span className="text-gray-400 text-lg">No Image Available</span>
+            ) : null}
+            {/* Fallback when no image or image fails */}
+            <div className={`w-full h-[300px] md:h-[400px] bg-gray-200 rounded-lg flex items-center justify-center ${hasValidImage ? 'hidden' : 'flex'}`}>
+              <div className="text-center text-gray-400">
+                <svg className="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                </svg>
+                <span className="text-lg">No Image Available</span>
               </div>
-            )}
+            </div>
           </div>
         </div>
 

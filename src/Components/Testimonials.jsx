@@ -1,6 +1,6 @@
 import React from 'react'
 import ReviewCard from './ReviewCard'
-import testimonial from '../data/testimonials.js'
+import testimonial from '../Data/TestimonialData.js'
 
 const Testimonials = () => {
     

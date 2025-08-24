@@ -19,7 +19,6 @@ const Booking = () => {
 
     const { cartItems, removeFromCart, updateQuantity } = useCart();
 
-    // ✅ Fetch offers from Firebase on component mount
     React.useEffect(() => {
         const fetchOffers = async () => {
             try {
@@ -37,21 +36,16 @@ const Booking = () => {
         fetchOffers();
     }, []);
 
-    // ✅ Calculate Subtotal
     const subtotal = cartItems.reduce((sum, item) => {
         const price = item.offerPrice ?? item.price ?? 0;
         const quantity = item.quantity ?? 1;
         return sum + price * quantity;
     }, 0);
 
-    // ✅ Calculate Grand Total (after discount)
     const total = Math.max(subtotal - discount, 0);
 
-    // ✅ Apply Coupon (fetches from Firebase)
     const applyCoupon = () => {
         const code = couponCode.trim().toUpperCase();
-
-        // Check against Firebase offers
         const found = offers.find((offer) => {
             const offerCode = offer.useCode || offer.coupon;
             return offerCode && offerCode.toUpperCase() === code;
@@ -59,29 +53,23 @@ const Booking = () => {
 
         if (found) {
             let calculatedDiscount = 0;
-
-            // Check if offer is still valid
             const now = Date.now();
             if (found.validDate && found.validDate < now) {
                 alert("⚠️ This coupon has expired.");
                 return;
             }
 
-            // Handle percentage discount from Firebase
             if (found.discountPercentage) {
                 calculatedDiscount = (subtotal * found.discountPercentage) / 100;
                 setDiscount(calculatedDiscount);
                 setAppliedCoupon(found);
                 alert(`✅ Coupon Applied: ${found.discountPercentage}% Off`);
-            }
-            // Handle legacy structure (if any)
-            else if (found.type === "percent") {
+            } else if (found.type === "percent") {
                 calculatedDiscount = (subtotal * found.discountValue) / 100;
                 setDiscount(calculatedDiscount);
                 setAppliedCoupon(found);
                 alert(`✅ Coupon Applied: ${found.discountValue}% Off`);
-            }
-            else if (found.type === "flat") {
+            } else if (found.type === "flat") {
                 if (found.minAmount && subtotal < found.minAmount) {
                     alert(`⚠️ Minimum order ₹${found.minAmount} required for this coupon.`);
                     return;
@@ -89,9 +77,7 @@ const Booking = () => {
                 setDiscount(found.discountValue);
                 setAppliedCoupon(found);
                 alert(`✅ Coupon Applied: ₹${found.discountValue} Off`);
-            }
-            else {
-                // Default to 10% if no specific discount found
+            } else {
                 calculatedDiscount = (subtotal * 10) / 100;
                 setDiscount(calculatedDiscount);
                 setAppliedCoupon(found);
@@ -104,7 +90,6 @@ const Booking = () => {
         }
     };
 
-    // Remove applied coupon
     const removeCoupon = () => {
         setDiscount(0);
         setAppliedCoupon(null);
@@ -119,57 +104,110 @@ const Booking = () => {
             return;
         }
 
-        // ✅ Total Duration
+        // Helper function to extract duration from various fields
+        const getDurationFromItem = (item) => {
+            // Try different possible duration fields and formats
+            let duration = 0;
+            
+            if (item.duration && typeof item.duration === 'number') {
+                duration = item.duration;
+            } else if (item.time) {
+                // If time is a string like "60 min" or "1 hour", extract number
+                if (typeof item.time === 'string') {
+                    const timeMatch = item.time.match(/(\d+)/);
+                    duration = timeMatch ? parseInt(timeMatch[1]) : 0;
+                    // If it contains "hour", multiply by 60
+                    if (item.time.toLowerCase().includes('hour')) {
+                        duration *= 60;
+                    }
+                } else if (typeof item.time === 'number') {
+                    duration = item.time;
+                }
+            } else if (item.Duration) {
+                duration = typeof item.Duration === 'number' ? item.Duration : parseInt(item.Duration) || 0;
+            } else if (item.Time) {
+                duration = typeof item.Time === 'number' ? item.Time : parseInt(item.Time) || 0;
+            }
+            
+            return duration || 0;
+        };
+
         const totalDuration = cartItems.reduce((sum, item) => {
             const quantity = item.quantity ?? 1;
+            
+            console.log('Calculating duration for item:', {
+                name: item.name,
+                services: item.services,
+                duration: item.duration,
+                time: item.time,
+                quantity: quantity
+            });
+            
             if (item.services && item.services.length > 0) {
-                const serviceSum = item.services.reduce((s, service) => s + (service.duration ?? 0), 0);
-                return sum + serviceSum * quantity;
+                // For packages with multiple services
+                const serviceSum = item.services.reduce((s, service) => {
+                    const serviceDuration = getDurationFromItem(service);
+                    console.log(`Service ${service.name} duration:`, serviceDuration);
+                    return s + serviceDuration;
+                }, 0);
+                return sum + (serviceSum * quantity);
             } else {
-                return sum + (item.duration ?? 0) * quantity;
+                // For individual services
+                const itemDuration = getDurationFromItem(item);
+                console.log(`Item ${item.name} duration:`, itemDuration);
+                return sum + (itemDuration * quantity);
             }
         }, 0);
 
-        // ✅ WhatsApp Message
+        console.log('Total calculated duration:', totalDuration);
+
+        // Format total duration for display
+        const formatDuration = (minutes) => {
+            if (minutes <= 0) return "Duration not specified";
+            if (minutes < 60) return `${minutes} minutes`;
+            
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = minutes % 60;
+            
+            if (remainingMinutes === 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+            return `${hours} hour${hours > 1 ? 's' : ''} ${remainingMinutes} minutes`;
+        };
+
         const message = `SERVICES:
 ${cartItems.map((item) => {
             const quantity = item.quantity ?? 1;
             if (item.services && item.services.length > 0) {
+                const itemDuration = item.services.reduce((sum, service) => sum + getDurationFromItem(service), 0) * quantity;
                 return `${item.name} x ${quantity}
-Total Duration: ${item.duration ?? "Varies"}
+Service Duration: ${formatDuration(itemDuration)}
 ${item.services.map((s) => `• ${s.name}${s.duration ? ` (${s.duration} mins)` : ""}`).join("\n")}`;
             } else {
-                return `${item.name} x ${quantity} : ₹ ${item.offerPrice ?? item.price ?? 0}`;
+                const itemDuration = getDurationFromItem(item) * quantity;
+                return `${item.name} x ${quantity} : ₹ ${item.offerPrice ?? item.price ?? 0}
+Service Duration: ${formatDuration(itemDuration)}`;
             }
         }).join("\n\n")}
 
-Client Name:
-${name}
-
-Address:
-${address}
-
+📅 APPOINTMENT DETAILS:
+Client Name: ${name}
+Address: ${address}
 Phone: ${phone}
+Preferred Date: ${date}
+Preferred Time: ${time}
+⏰ Total Service Duration: ${formatDuration(totalDuration)}
 
-Appointment Date: ${date}
-Appointment Time: ${time}
-
-Subtotal: ${subtotal} INR
-${appliedCoupon ? `Coupon (${appliedCoupon.useCode || appliedCoupon.coupon}): -${discount} INR` : ''}
-${discount > 0 ? `Discount: -${discount} INR` : ''}
-Total Billing Amount: ${total} INR
-
-`;
+💰 BILLING:
+Subtotal: ₹${subtotal}
+${appliedCoupon ? `Coupon (${appliedCoupon.useCode || appliedCoupon.coupon}): -₹${discount}` : ''}
+${discount > 0 ? `Discount: -₹${discount}` : ''}
+Total Amount: ₹${total}`;
 
         const whatsappNumber = "919288302255";
         const encodedMessage = encodeURIComponent(message);
         const url = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
         window.open(url, "_blank");
 
-        // ✅ Clear cart after booking
         cartItems.forEach((item) => removeFromCart(item.id));
-
-        // ✅ Reset form
         setName('');
         setPhone('');
         setDate('');
@@ -197,65 +235,90 @@ Total Billing Amount: ${total} INR
                     <p className="text-center">Action</p>
                 </div>
 
-                {cartItems.map((product) => (
-                    <div key={product.id} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-start text-sm md:text-base font-medium pt-3">
-                        <div className="flex flex-col md:flex-row items-start md:items-center md:gap-6 gap-3">
-                            <div className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden bg-gray-50">
-                                {/* ✅ Fixed image display with fallback */}
-                                {product.image || product.imageUrl ? (
-                                    <img
-                                        className="max-w-full h-full object-cover"
-                                        src={product.image || product.imageUrl}
-                                        alt={product.name}
-                                        onError={(e) => {
-                                            e.target.style.display = 'none';
-                                            e.target.nextSibling.style.display = 'flex';
-                                        }}
-                                    />
-                                ) : null}
-                                {/* Fallback placeholder */}
-                                <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs text-center" style={{ display: (product.image || product.imageUrl) ? 'none' : 'flex' }}>
-                                    No Image
+                {cartItems.map((product) => {
+                    // Get the display image with multiple fallbacks
+                    const displayImage = product.image || product.imageUrl || product.packageImageUrl;
+                    const hasValidImage = displayImage && 
+                                         typeof displayImage === 'string' && 
+                                         displayImage.trim() !== '' && 
+                                         !['undefined', 'null', 'false'].includes(displayImage.toLowerCase());
+
+                    console.log('Cart item image debug:', { 
+                        id: product.id, 
+                        name: product.name,
+                        image: product.image,
+                        imageUrl: product.imageUrl,
+                        packageImageUrl: product.packageImageUrl,
+                        displayImage,
+                        hasValidImage 
+                    });
+
+                    return (
+                        <div key={product.id} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-start text-sm md:text-base font-medium pt-3">
+                            <div className="flex flex-col md:flex-row items-start md:items-center md:gap-6 gap-3">
+                                <div className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden bg-gray-50">
+                                    {hasValidImage ? (
+                                        <img
+                                            className="max-w-full h-full object-cover"
+                                            src={displayImage}
+                                            alt={product.name || 'Product'}
+                                            onError={(e) => {
+                                                console.error('Cart image failed to load:', displayImage);
+                                                e.target.style.display = 'none';
+                                                e.target.nextSibling.style.display = 'flex';
+                                            }}
+                                            onLoad={() => console.log('Cart image loaded successfully:', displayImage)}
+                                        />
+                                    ) : null}
+                                    {/* Fallback placeholder */}
+                                    <div className={`w-full h-full flex items-center justify-center text-gray-400 text-xs text-center ${hasValidImage ? 'hidden' : 'flex'}`}>
+                                        <div>
+                                            <svg className="w-6 h-6 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                            </svg>
+                                            <span>No Image</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="font-semibold">{product.name}</p>
+                                    <div className='flex items-center mt-2'>
+                                        <span className="mr-2">Qty:</span>
+                                        <select
+                                            value={product.quantity || 1}
+                                            onChange={e => updateQuantity(product.id, Number(e.target.value))}
+                                            className='outline-none border rounded px-2 py-1'
+                                        >
+                                            {[...Array(10)].map((_, idx) => (
+                                                <option key={idx + 1} value={idx + 1}>{idx + 1}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    {product.services && product.services.length > 0 && (
+                                        <ul className="text-gray-600 text-sm mt-1">
+                                            {product.services.map((s) => (
+                                                <li key={s.id}>• {s.name}</li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </div>
                             </div>
-                            <div>
-                                <p className="font-semibold">{product.name}</p>
-                                <div className='flex items-center mt-2'>
-                                    <span className="mr-2">Qty:</span>
-                                    <select
-                                        value={product.quantity || 1}
-                                        onChange={e => updateQuantity(product.id, Number(e.target.value))}
-                                        className='outline-none border rounded px-2 py-1'
-                                    >
-                                        {[...Array(10)].map((_, idx) => (
-                                            <option key={idx + 1} value={idx + 1}>{idx + 1}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                {product.services && product.services.length > 0 && (
-                                    <ul className="text-gray-600 text-sm mt-1">
-                                        {product.services.map((s) => (
-                                            <li key={s.id}>• {s.name}</li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
+
+                            {/* Price */}
+                            <p className="text-center">
+                                ₹{(product.offerPrice !== undefined ? product.offerPrice : product.price) * (product.quantity || 1)}
+                            </p>
+
+                            {/* Remove */}
+                            <button
+                                onClick={() => removeFromCart(product.id)}
+                                className="text-red-500 text-sm mx-auto hover:text-red-700"
+                            >
+                                ❌
+                            </button>
                         </div>
-
-                        {/* Price */}
-                        <p className="text-center">
-                            ₹{(product.offerPrice !== undefined ? product.offerPrice : product.price) * (product.quantity || 1)}
-                        </p>
-
-                        {/* Remove */}
-                        <button
-                            onClick={() => removeFromCart(product.id)}
-                            className="text-red-500 text-sm mx-auto hover:text-red-700"
-                        >
-                            ❌
-                        </button>
-                    </div>
-                ))}
+                    );
+                })}
 
                 {/* Coupon Section */}
                 <div className="mt-6">

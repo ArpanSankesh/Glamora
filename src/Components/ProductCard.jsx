@@ -6,17 +6,35 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
     const { addToCart, removeFromCart, isInCart } = useCart();
     const navigate = useNavigate();
 
-    // Use imageUrl if image is not provided (for flexibility)
+    // Priority order: image -> imageUrl -> fallback
     const displayImage = image || imageUrl;
 
-    // Debug logging
-    console.log('ProductCard props:', { id, name, image, imageUrl, displayImage, viewType });
+    // Debug logging - remove in production
+    console.log('ProductCard Debug:', { 
+        id, 
+        name, 
+        image, 
+        imageUrl, 
+        displayImage,
+        hasImage: !!displayImage
+    });
 
     const handleCart = () => {
         if (isInCart(id)) {
             removeFromCart(id);
         } else {
-            addToCart({ id, name, description, category, time, price, offerPrice, image, quantity: 1 });
+            // Use displayImage for cart consistency
+            addToCart({ 
+                id, 
+                name, 
+                description, 
+                category, 
+                time, 
+                price, 
+                offerPrice, 
+                image: displayImage, // Use the resolved image
+                quantity: 1 
+            });
         }
     };
 
@@ -24,44 +42,41 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
         navigate(`/product/${viewType}/${id}`);
     };
 
-    // Check if image URL is valid
-    const hasValidImage = displayImage && displayImage.trim() !== '' && displayImage !== 'undefined' && displayImage !== 'null';
+    // More robust image validation
+    const hasValidImage = displayImage && 
+                         typeof displayImage === 'string' && 
+                         displayImage.trim() !== '' && 
+                         !['undefined', 'null', 'false'].includes(displayImage.toLowerCase());
 
     return (
-        <div
-            className="border border-[var(--color-secondary)] rounded-md bg-white
-                        w-full max-w-90
-                       flex flex-row items-center justify-between md:flex-col   /* row on mobile, col on md+ */
-                       hover:scale-105 transition-all"
-        >
+        <div className="border border-[var(--color-secondary)] rounded-md bg-white w-full max-w-90 flex flex-row items-center justify-between md:flex-col hover:scale-105 transition-all">
             {/* IMAGE */}
             <div
                 onClick={handleClick}
-                className="cursor-pointer flex-shrink-0
-                            w-32 h-32 md:w-full md:h-60 ml-3 lg:ml-0
-                            md:rounded-t-md overflow-hidden
-                            flex items-center justify-center"
+                className="cursor-pointer flex-shrink-0 w-32 h-32 md:w-full md:h-60 ml-3 lg:ml-0 md:rounded-t-md overflow-hidden flex items-center justify-center"
             >
                 {hasValidImage ? (
-                    <div
-                        className="w-full h-full bg-cover bg-center bg-gray-200"
-                        style={{ backgroundImage: `url(${displayImage})` }}
+                    <img
+                        src={displayImage}
+                        alt={name || 'Service'}
+                        className="w-full h-full object-cover"
                         onError={(e) => {
-                            console.error('Failed to load background image:', displayImage);
-                            e.target.style.backgroundImage = 'none';
+                            console.error('Image failed to load:', displayImage);
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
                         }}
+                        onLoad={() => console.log('Image loaded successfully:', displayImage)}
                     />
-                ) : (
-                    // Fallback when no image is available
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                        <div className="text-center text-gray-400">
-                            <svg className="w-8 h-8 md:w-12 md:h-12 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                            </svg>
-                            <p className="text-xs">No Image</p>
-                        </div>
+                ) : null}
+                {/* Fallback - always present but hidden when image loads */}
+                <div className={`w-full h-full bg-gray-200 flex items-center justify-center ${hasValidImage ? 'hidden' : 'flex'}`}>
+                    <div className="text-center text-gray-400">
+                        <svg className="w-8 h-8 md:w-12 md:h-12 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs">No Image</p>
                     </div>
-                )}
+                </div>
             </div>
 
             {/* CONTENT */}
@@ -83,8 +98,7 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
                     </p>
                     <button
                         onClick={handleCart}
-                        className={`cursor-pointer flex items-center justify-center gap-1
-                                    w-[64px] md:w-[80px] h-[34px] rounded font-medium transition-all
+                        className={`cursor-pointer flex items-center justify-center gap-1 w-[64px] md:w-[80px] h-[34px] rounded font-medium transition-all
                                     ${isInCart(id)
                                         ? 'bg-[var(--color-opaque)] border border-[var(--color-secondary)] text-[var(--color-accent)]'
                                         : 'bg-[var(--color-text)] text-[var(--color-secondary)]'}`}
