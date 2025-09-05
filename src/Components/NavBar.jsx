@@ -64,8 +64,8 @@ const NavBar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full h-[70px] z-20 transition-all duration-300
-        px-6 md:px-16 lg:px-24 flex items-center justify-between 
+      className={`fixed top-0 left-0 w-full h-[70px]  transition-all duration-300
+        px-6 md:px-16 lg:px-24 flex items-center justify-between z-50
         ${isHomePage && !isScrolled
           ? 'bg-transparent text-[var(--color-text)]'
           : 'bg-[var(--color-text)] text-[var(--color-accent)] shadow-lg backdrop-blur-sm'}`}
@@ -76,7 +76,7 @@ const NavBar = () => {
       </button>
 
       {/* Desktop Menu + User area */}
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-3">
         <div className="hidden md:flex items-center gap-10">
           {['home', 'services', 'offers', 'about', 'contact'].map((link) => (
             <button 
@@ -106,7 +106,7 @@ const NavBar = () => {
           ) : !currentUser ? (
             <button 
               onClick={() => navigate('/login')} 
-              className="cursor-pointer px-6 py-2 rounded-full text-sm bg-[var(--color-accent)] text-[var(--color-text)] hover:scale-105 transition-transform shadow-md hover:shadow-lg"
+              className="cursor-pointer px-3 py-2 md:px-6 md:py-2 rounded-full text-xs md:text-sm bg-[var(--color-accent)] text-[var(--color-text)] hover:scale-105 transition-transform shadow-md hover:shadow-lg"
             >
               Log In
             </button>

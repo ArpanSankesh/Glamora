@@ -93,7 +93,7 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
                             e.stopPropagation();
                             handleCart();
                         }}
-                        className={`cursor-pointer flex items-center justify-center gap-1 w-[64px] md:w-[80px] h-[34px] rounded font-medium transition-all z-50
+                        className={`cursor-pointer flex items-center justify-center gap-1 w-[64px] md:w-[80px] h-[34px] rounded font-medium transition-all 
                                     ${isInCart(id)
                                 ? 'bg-[var(--color-opaque)] border border-[var(--color-secondary)] text-[var(--color-accent)]'
                                 : 'bg-[var(--color-text)] text-[var(--color-secondary)]'}`}
