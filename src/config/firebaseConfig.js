@@ -1,22 +1,66 @@
-// src/firebaseConfig.js
+// src/config/firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration (from the screenshot)
 const firebaseConfig = {
-  apiKey: "AIzaSyChYWz8MtMfNJcJ284bQ-2EdwSyayAHZS4",
-  authDomain: "parlor-5f5f1.firebaseapp.com",
-  projectId: "parlor-5f5f1",
-  storageBucket: "parlor-5f5f1.appspot.com",
-  messagingSenderId: "596746493933",
-  appId: "1:596746493933:web:e6741b86aaf0bd1fae91e4",
-  measurementId: "G-ZL57ZE2HZ5"
+  apiKey: "AIzaSyCFTiDr7BTZn0DihhNNccafMuGo0EpDctk",
+  authDomain: "prettynbeauty-66faf.firebaseapp.com",
+  projectId: "prettynbeauty-66faf",
+  storageBucket: "prettynbeauty-66faf.firebasestorage.app",
+  messagingSenderId: "966357488506",
+  appId: "1:966357488506:web:b827acb4e62dff32d8fcc3",
+  measurementId: "G-JKLVQT37M7"
 };
+
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore (this is what you’ll use in your app)
+// Initialize services
+const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-export { db };
+// Set auth language
+auth.languageCode = 'en';
+
+// Configuration for reCAPTCHA v2
+if (typeof window !== 'undefined') {
+  // Disable App Check for development to avoid token issues
+  // This allows reCAPTCHA v2 to work without App Check complications
+  console.log('Firebase initialized for reCAPTCHA v2');
+  
+  // Optional: Set up development overrides
+  window.FIREBASE_AUTH_EMULATOR_HOST = false; // Ensure we're not using emulator
+}
+
+// Helper logout function
+const handleLogout = async () => {
+  try {
+    // Clean up any reCAPTCHA verifier before logout
+    if (typeof window !== 'undefined' && window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch (error) {
+        console.error('Error clearing reCAPTCHA:', error);
+      }
+      window.recaptchaVerifier = null;
+    }
+    
+    await auth.signOut();
+    console.log("User logged out successfully!");
+  } catch (error) {
+    console.error("Error logging out: ", error);
+  }
+};
+
+// Export all services and helpers
+export { 
+  app,
+  auth, 
+  db, 
+  storage, 
+  handleLogout 
+};

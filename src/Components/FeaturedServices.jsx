@@ -96,7 +96,7 @@ const FeaturedServices = () => {
   }
 
   return (
-    <div className='my-20 mx-10 flex flex-col items-center justify-center'>
+    <div className='mx-5 my-20 flex flex-col items-center justify-center'>
       <h1 className="text-3xl md:text-5xl font-medium text-[var(--color-accent)] text-center">Featured Services</h1>
       <p className="text-[var(--color-secondary)] text-center md:text-xl mt-2">Explore our top beauty treatments.</p>
       

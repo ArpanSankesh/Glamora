@@ -9,31 +9,21 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
     // Priority order: image -> imageUrl -> fallback
     const displayImage = image || imageUrl;
 
-    // Debug logging - remove in production
-    console.log('ProductCard Debug:', { 
-        id, 
-        name, 
-        image, 
-        imageUrl, 
-        displayImage,
-        hasImage: !!displayImage
-    });
-
     const handleCart = () => {
         if (isInCart(id)) {
             removeFromCart(id);
         } else {
             // Use displayImage for cart consistency
-            addToCart({ 
-                id, 
-                name, 
-                description, 
-                category, 
-                time, 
-                price, 
-                offerPrice, 
-                image: displayImage, // Use the resolved image
-                quantity: 1 
+            addToCart({
+                id,
+                name,
+                description,
+                category,
+                time,
+                price,
+                offerPrice,
+                image: displayImage, 
+                quantity: 1
             });
         }
     };
@@ -43,17 +33,19 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
     };
 
     // More robust image validation
-    const hasValidImage = displayImage && 
-                         typeof displayImage === 'string' && 
-                         displayImage.trim() !== '' && 
-                         !['undefined', 'null', 'false'].includes(displayImage.toLowerCase());
+    const hasValidImage = displayImage &&
+        typeof displayImage === 'string' &&
+        displayImage.trim() !== '' &&
+        !['undefined', 'null', 'false'].includes(displayImage.toLowerCase());
 
     return (
-        <div className="border border-[var(--color-secondary)] rounded-md bg-white w-full max-w-90 flex flex-row items-center justify-between md:flex-col hover:scale-105 transition-all">
+        <div className="border border-[var(--color-secondary)] rounded-md bg-white w-full max-w-90 flex flex-row items-center justify-between md:flex-col hover:scale-105 transition-all"
+            onClick={handleClick}>
+
             {/* IMAGE */}
             <div
-                onClick={handleClick}
-                className="cursor-pointer flex-shrink-0 w-32 h-32 md:w-full md:h-60 ml-3 lg:ml-0 md:rounded-t-md overflow-hidden flex items-center justify-center"
+
+                className="cursor-pointer flex-shrink-0 w-20 h-20 md:w-full md:h-60 ml-3 lg:ml-0 md:rounded-t-md overflow-hidden flex items-center justify-center"
             >
                 {hasValidImage ? (
                     <img
@@ -80,11 +72,11 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
             </div>
 
             {/* CONTENT */}
-            <div className="p-4 flex flex-col justify-between text-gray-500/60 text-sm flex-1">
-                <div>
-                    <div className="flex justify-between items-center">
-                        <p className="text-[var(--color-secondary)] font-semibold text-lg md:text-xl">{name || 'Unnamed Service'}</p>
-                        <p className="text-[var(--color-secondary)] text-sm md:text-base">{time ? `${time}` : 'N/A'}</p>
+            <div className="w-full p-4 flex flex-col justify-between text-gray-500/60 text-sm flex-1 ">
+                <div className=''>
+                    <div className="flex justify-between items-center ">
+                        <p className="text-[var(--color-secondary)] font-semibold text-md md:text-xl">{name || 'Unnamed Service'}</p>
+                        <p className="text-[var(--color-secondary)] text-xs md:text-base">{time ? `${time} Min` : 'N/A'}</p>
                     </div>
                     <p className="text-gray-700 line-clamp-3 text-sm mt-1">{description || 'No description available'}</p>
                 </div>
@@ -97,11 +89,14 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
                         )}
                     </p>
                     <button
-                        onClick={handleCart}
-                        className={`cursor-pointer flex items-center justify-center gap-1 w-[64px] md:w-[80px] h-[34px] rounded font-medium transition-all
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleCart();
+                        }}
+                        className={`cursor-pointer flex items-center justify-center gap-1 w-[64px] md:w-[80px] h-[34px] rounded font-medium transition-all z-50
                                     ${isInCart(id)
-                                        ? 'bg-[var(--color-opaque)] border border-[var(--color-secondary)] text-[var(--color-accent)]'
-                                        : 'bg-[var(--color-text)] text-[var(--color-secondary)]'}`}
+                                ? 'bg-[var(--color-opaque)] border border-[var(--color-secondary)] text-[var(--color-accent)]'
+                                : 'bg-[var(--color-text)] text-[var(--color-secondary)]'}`}
                     >
                         {isInCart(id) ? 'Remove' : 'Add'}
                     </button>

@@ -5,16 +5,13 @@ const Contact = () => {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
 
-
     const handleSubmit = (e) => {
         e.preventDefault();
 
         const phoneNumber = '919572495969';
-
         const text = `Hello! 👋\n\nName: ${name}\nEmail: ${email}\nMessage: ${message}`;
         const encodedText = encodeURIComponent(text);
         const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedText}`;
-
 
         window.open(whatsappURL, '_blank');
     };
@@ -41,12 +38,19 @@ const Contact = () => {
                     <textarea value={message} onChange={(e) => setMessage(e.target.value)} className="w-full mt-2 p-2 h-40 border rounded resize-none" required></textarea>
                 </div>
 
-                <button type="submit" className="mt-5 bg-[var(--color-accent)] text-white font-bold h-12 w-56 px-4 rounded-xl active:scale-95 transition">
-                    Send Message via WhatsApp
-                </button>
+                <div className="flex gap-4 mt-5">
+                    <button type="submit" className="bg-[var(--color-accent)] text-white font-bold h-12 w-56 px-4 rounded-xl active:scale-95 transition">
+                        Send Message via WhatsApp
+                    </button>
+                    
+
+               
+                    
+                </div>
+                    
             </form>
         </section>
     );
 }
 
-export default Contact
+export default Contact;
