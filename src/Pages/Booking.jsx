@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -26,18 +26,119 @@ const Booking = () => {
     date: "",
     timeSlot: ""
   });
+  
+  // Coupon related states
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [couponLoading, setCouponLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // EmailJS configuration
-  const EMAILJS_SERVICE_ID = 'service_74hljrr'; // Your service ID
-  const EMAILJS_TEMPLATE_ID = 'template_8hcq34l'; // Your template ID
-  const EMAILJS_PUBLIC_KEY = '4Oes1RsRwt5IACLMK'; // Replace with your EmailJS public key
-  const SELLER_EMAIL = 'jazzbeautysecrets@gmail.com'; // Replace with actual seller email
+  const EMAILJS_SERVICE_ID = 'service_74hljrr';
+  const EMAILJS_TEMPLATE_ID = 'template_8hcq34l';
+  const EMAILJS_PUBLIC_KEY = '4Oes1RsRwt5IACLMK';
+  const SELLER_EMAIL = 'jazzbeautysecrets@gmail.com';
 
-  // Initialize EmailJS
-  React.useEffect(() => {
+  // Initialize EmailJS and fetch coupons
+  useEffect(() => {
     emailjs.init(EMAILJS_PUBLIC_KEY);
+    fetchActiveCoupons();
   }, []);
+
+  // Fetch active coupons from Firebase
+  const fetchActiveCoupons = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const q = query(
+        collection(db, 'offers'),
+        where('validUntil', '>=', today),
+        orderBy('validUntil', 'asc')
+      );
+
+      const querySnapshot = await getDocs(q);
+      const coupons = [];
+      
+      querySnapshot.forEach((doc) => {
+        coupons.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      setAvailableCoupons(coupons);
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+    }
+  };
+
+  // Apply coupon code
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+
+    setCouponLoading(true);
+    
+    try {
+      // Find coupon in available coupons
+      const coupon = availableCoupons.find(
+        c => c.couponCode && c.couponCode.toLowerCase() === couponCode.toLowerCase()
+      );
+
+      if (!coupon) {
+        toast.error("Invalid coupon code");
+        setCouponLoading(false);
+        return;
+      }
+
+      // Check if coupon is still valid
+      const today = new Date().toISOString().split('T')[0];
+      if (coupon.validUntil < today) {
+        toast.error("This coupon has expired");
+        setCouponLoading(false);
+        return;
+      }
+
+      // Check minimum order value if specified
+      if (coupon.minOrderValue && subtotal < coupon.minOrderValue) {
+        toast.error(`Minimum order value of ₹${coupon.minOrderValue} required for this coupon`);
+        setCouponLoading(false);
+        return;
+      }
+
+      setAppliedCoupon(coupon);
+      toast.success(`Coupon applied! You saved ₹${calculateDiscount(coupon)}`);
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      toast.error("Failed to apply coupon");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  // Remove applied coupon
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    toast.success("Coupon removed");
+  };
+
+  // Calculate discount amount
+  const calculateDiscount = (coupon) => {
+    if (!coupon) return 0;
+    
+    const discountAmount = (subtotal * coupon.discount) / 100;
+    
+    // Apply maximum discount limit if specified
+    if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
+      return coupon.maxDiscount;
+    }
+    
+    return Math.round(discountAmount);
+  };
 
   // Send email notification to seller
   const sendSellerNotification = async (orderDetails) => {
@@ -52,8 +153,11 @@ Order Details:
 - Phone: ${orderDetails.phone}
 - Address: ${orderDetails.address}
 - Date: ${orderDetails.date}
-        - Time: ${orderDetails.time}
+- Time: ${orderDetails.time}
 - Items: ${orderDetails.items.map(item => `${item.name} (Qty: ${item.quantity})`).join(', ')}
+- Subtotal: ₹${orderDetails.subtotal}
+${orderDetails.discount > 0 ? `- Discount (${orderDetails.couponCode}): -₹${orderDetails.discount}` : ''}
+- Service Charge: ₹${orderDetails.serviceCharge}
 - Total Amount: ₹${orderDetails.total}
 
 ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}` : ''}
@@ -72,7 +176,6 @@ Please check your admin dashboard for complete order details.`,
       console.log('Email notification sent to seller successfully');
     } catch (error) {
       console.error('Failed to send email notification:', error);
-      // Don't show error to user as this is a background process
     }
   };
 
@@ -107,9 +210,13 @@ Please check your admin dashboard for complete order details.`,
     return sum + price * quantity;
   }, 0);
 
-  // Calculate service charge
-  const serviceCharge = subtotal >= 999 ? 0 : 150;
-  const total = subtotal + serviceCharge;
+  // Calculate discount
+  const discount = appliedCoupon ? calculateDiscount(appliedCoupon) : 0;
+  const discountedSubtotal = subtotal - discount;
+
+  // Calculate service charge (applied after discount)
+  const serviceCharge = discountedSubtotal >= 999 ? 0 : 150;
+  const total = discountedSubtotal + serviceCharge;
 
   const handleInputChange = (e) => {
     setFormData({
@@ -146,7 +253,7 @@ Please check your admin dashboard for complete order details.`,
         quantity: it.quantity || 1,
       }));
 
-      // Create order object
+      // Create order object with coupon details
       const orderData = {
         userId: currentUser.uid,
         customerName: name,
@@ -157,8 +264,10 @@ Please check your admin dashboard for complete order details.`,
         time: timeSlot,
         items: normalizedItems,
         subtotal,
+        discount,
+        couponCode: appliedCoupon?.couponCode || "",
+        couponName: appliedCoupon?.name || "",
         serviceCharge,
-        discount: 0,
         total,
         status: "Pending",
         createdAt: serverTimestamp(),
@@ -183,7 +292,7 @@ Please check your admin dashboard for complete order details.`,
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-25 px-4">
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -214,7 +323,7 @@ Please check your admin dashboard for complete order details.`,
                   <p className="text-lg text-gray-500 mb-4">Your cart is empty</p>
                   <button
                     onClick={() => navigate('/services')}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    className="bg-[var(--color-secondary)] text-white px-6 py-2 rounded-lg font-medium hover:bg-[var(--color-accent)] transition-colors"
                   >
                     Browse Services
                   </button>
@@ -305,6 +414,79 @@ Please check your admin dashboard for complete order details.`,
                 </div>
               )}
             </div>
+
+            {/* Coupon Section */}
+            {cartItems.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Apply Coupon</h2>
+                
+                {!appliedCoupon ? (
+                  <div className="space-y-4">
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Enter coupon code"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                      />
+                      <button
+                        onClick={applyCoupon}
+                        disabled={couponLoading}
+                        className="px-6 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:bg-[var(--color-accent)] transition-colors font-medium disabled:opacity-50"
+                      >
+                        {couponLoading ? "Applying..." : "Apply"}
+                      </button>
+                    </div>
+                    
+                    {/* Show available coupons */}
+                    {availableCoupons.length > 0 && (
+                      <div>
+                        <p className="text-sm text-gray-600 mb-2">Available offers:</p>
+                        <div className="space-y-2">
+                          {availableCoupons.map((coupon) => (
+                            <div key={coupon.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                              <div>
+                                <p className="font-medium text-sm text-green-800">{coupon.name}</p>
+                                <p className="text-xs text-green-600">
+                                  {coupon.discount}% OFF{coupon.couponCode && ` • Code: ${coupon.couponCode}`}
+                                  {coupon.minOrderValue && ` • Min order: ₹${coupon.minOrderValue}`}
+                                </p>
+                              </div>
+                              {coupon.couponCode && (
+                                <button
+                                  onClick={() => {
+                                    setCouponCode(coupon.couponCode);
+                                  }}
+                                  className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
+                                >
+                                  Use Code
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div>
+                      <p className="font-medium text-green-800">{appliedCoupon.name}</p>
+                      <p className="text-sm text-green-600">
+                        Code: {appliedCoupon.couponCode} • You saved ₹{discount}
+                      </p>
+                    </div>
+                    <button
+                      onClick={removeCoupon}
+                      className="text-red-500 hover:text-red-700 font-medium text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Booking Form */}
             {cartItems.length > 0 && (
@@ -510,7 +692,7 @@ Please check your admin dashboard for complete order details.`,
             )}
           </div>
 
-          {/* Order Summary Sidebar - Enhanced Responsiveness */}
+          {/* Order Summary Sidebar - Enhanced with Coupon Details */}
           {cartItems.length > 0 && (
             <div className="lg:col-span-1 order-first lg:order-last">
               <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 lg:sticky lg:top-8">
@@ -522,6 +704,16 @@ Please check your admin dashboard for complete order details.`,
                     <span className="font-medium whitespace-nowrap">₹{subtotal.toFixed(0)}</span>
                   </div>
                   
+                  {/* Show discount if coupon is applied */}
+                  {appliedCoupon && discount > 0 && (
+                    <div className="flex justify-between items-center text-sm sm:text-base text-green-600">
+                      <span className="truncate mr-2">
+                        Discount ({appliedCoupon.couponCode})
+                      </span>
+                      <span className="font-medium whitespace-nowrap">-₹{discount}</span>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between items-center text-sm sm:text-base">
                     <span className="truncate mr-2">Service Charge</span>
                     <span className={`font-medium whitespace-nowrap ${serviceCharge === 0 ? 'text-[var(--color-secondary)]' : 'text-gray-600'}`}>
@@ -529,9 +721,9 @@ Please check your admin dashboard for complete order details.`,
                     </span>
                   </div>
                   
-                  {subtotal < 999 && (
+                  {discountedSubtotal < 999 && (
                     <div className="text-xs text-[var(--color-secondary)] bg-[var(--color-opaque)] p-2 rounded">
-                      💡 Add ₹{(999 - subtotal).toFixed(0)} more to get FREE service charge!
+                      💡 Add ₹{(999 - discountedSubtotal).toFixed(0)} more to get FREE service charge!
                     </div>
                   )}
                   
@@ -540,6 +732,11 @@ Please check your admin dashboard for complete order details.`,
                       <span>Total</span>
                       <span className="whitespace-nowrap">₹{total.toFixed(0)}</span>
                     </div>
+                    {discount > 0 && (
+                      <div className="text-sm text-green-600 text-right">
+                        You saved ₹{discount}!
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -550,7 +747,8 @@ Please check your admin dashboard for complete order details.`,
                     <li>• Trained Professionals</li>
                     <li>• Quality Guaranteed</li>
                     <li>• Customer Support</li>
-                    {subtotal >= 999 && <li>• FREE Service Charge</li>}
+                    {discountedSubtotal >= 999 && <li>• FREE Service Charge</li>}
+                    {appliedCoupon && <li>• {appliedCoupon.discount}% Discount Applied</li>}
                   </ul>
                 </div>
 

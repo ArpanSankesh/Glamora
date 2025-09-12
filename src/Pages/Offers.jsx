@@ -41,7 +41,7 @@ const Offers = () => {
   }
 
   return (
-    <div className="py-28 px-6 max-w-5xl mx-auto">
+    <div className="py-10 px-6 max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold flex items-center gap-2 text-pink-600 mb-8">
         🎁 Limited Time Offers
       </h1>

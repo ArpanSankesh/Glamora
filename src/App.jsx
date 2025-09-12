@@ -32,6 +32,8 @@ import AddServices from './Pages/seller/AddServices.jsx';
 import AddPackages from './Pages/seller/AddPackages.jsx';
 import AddCategory from './Pages/seller/AddCategory.jsx';
 import AddOffer from './Pages/seller/AddOffer.jsx';
+import AddTestimonial from './Pages/seller/AddTestimonial.jsx';
+import ManageTestimonials from './Pages/seller/ManageTestimonials.jsx';
 
 // Protected Route
 import ProtectedRoute from './Components/ProtectedRoute.jsx';
@@ -42,7 +44,6 @@ const App = () => {
   const isLoginPage = location.pathname === '/login';
 
   return (
-    
     <AuthProvider>
       <Toaster position="top-right" />
       {!isSellerPage && !isLoginPage && <NavBar />}
@@ -77,6 +78,8 @@ const App = () => {
           <Route path="add-package" element={<AddPackages />} />
           <Route path="add-category" element={<AddCategory />} />
           <Route path="add-offer" element={<AddOffer />} />
+          <Route path="add-testimonial" element={<AddTestimonial />} />
+          <Route path="manage-testimonials" element={<ManageTestimonials />} />
         </Route>
       </Routes>
       {!isSellerPage && !isLoginPage && <Footer />}

@@ -14,8 +14,7 @@ const Footer = () => {
             <h1 className="text-3xl font-bold">PrettyNbeauty</h1>
           </div>
           <p className="mt-6 text-sm">
-            PrettyNbeauty is your trusted beauty destination, offering premium facial, skin care,
-            and spa services to help you look and feel your best.
+            Get the best salon at home services in Jamshedpur. From facials, hair care & grooming to bridal packages, our experts bring luxury beauty care to your doorstep.
           </p>
           <div className="flex items-center gap-2 mt-4">
             <img

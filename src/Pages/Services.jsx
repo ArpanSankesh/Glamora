@@ -95,7 +95,7 @@ const Services = () => {
   }
 
   return (
-    <div className="w-full pt-25 px-2 sm:px-6 lg:px-8">
+    <div className="w-full pt-10 px-2 sm:px-6 lg:px-8">
       {/* Packages Section */}
       <section className="mb-16">
         <div className="text-center mb-8">

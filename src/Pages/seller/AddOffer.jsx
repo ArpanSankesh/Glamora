@@ -13,6 +13,8 @@ const AddOffer = () => {
   const [discount, setDiscount] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [couponCode, setCouponCode] = useState("");
+  const [minOrderValue, setMinOrderValue] = useState(""); // New field
+  const [maxDiscount, setMaxDiscount] = useState(""); // Optional max discount cap
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(EMPTY_PREVIEW);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +31,8 @@ const AddOffer = () => {
   const [editDiscount, setEditDiscount] = useState("");
   const [editValidUntil, setEditValidUntil] = useState("");
   const [editCouponCode, setEditCouponCode] = useState("");
+  const [editMinOrderValue, setEditMinOrderValue] = useState(""); // New edit field
+  const [editMaxDiscount, setEditMaxDiscount] = useState(""); // New edit field
   const [editImage, setEditImage] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -133,6 +137,8 @@ const AddOffer = () => {
     setDiscount("");
     setValidUntil("");
     setCouponCode("");
+    setMinOrderValue("");
+    setMaxDiscount("");
     setImageFile(null);
     setImagePreview(EMPTY_PREVIEW);
   };
@@ -144,6 +150,17 @@ const AddOffer = () => {
       return;
     }
 
+    // Validate min order value and max discount if provided
+    if (minOrderValue && isNaN(Number(minOrderValue))) {
+      setMessage("Please enter a valid minimum order value.");
+      return;
+    }
+
+    if (maxDiscount && isNaN(Number(maxDiscount))) {
+      setMessage("Please enter a valid maximum discount amount.");
+      return;
+    }
+
     setIsLoading(true);
     setMessage("Adding offer...");
 
@@ -151,8 +168,8 @@ const AddOffer = () => {
       // Upload image
       const imageUrl = await uploadImage(imageFile);
 
-      // Save offer
-      await addDoc(collection(db, "offers"), {
+      // Prepare offer data
+      const offerData = {
         name: offerName.trim(),
         description: description.trim(),
         discount: Number(discount),
@@ -160,7 +177,19 @@ const AddOffer = () => {
         couponCode: couponCode.trim() || "", // Make couponCode optional with fallback
         imageUrl,
         createdAt: serverTimestamp(),
-      });
+      };
+
+      // Add optional fields if they have values
+      if (minOrderValue && minOrderValue.trim() !== "") {
+        offerData.minOrderValue = Number(minOrderValue);
+      }
+
+      if (maxDiscount && maxDiscount.trim() !== "") {
+        offerData.maxDiscount = Number(maxDiscount);
+      }
+
+      // Save offer
+      await addDoc(collection(db, "offers"), offerData);
 
       setMessage("Offer added successfully!");
       resetForm();
@@ -210,6 +239,8 @@ const AddOffer = () => {
     setEditDiscount(offer.discount);
     setEditValidUntil(offer.validUntil);
     setEditCouponCode(offer.couponCode || ""); // Handle missing couponCode
+    setEditMinOrderValue(offer.minOrderValue || ""); // Handle missing minOrderValue
+    setEditMaxDiscount(offer.maxDiscount || ""); // Handle missing maxDiscount
     setEditImagePreview(offer.imageUrl);
     setEditImage(null);
   };
@@ -221,6 +252,8 @@ const AddOffer = () => {
     setEditDiscount('');
     setEditValidUntil('');
     setEditCouponCode('');
+    setEditMinOrderValue('');
+    setEditMaxDiscount('');
     setEditImage(null);
     setEditImagePreview(null);
   };
@@ -228,6 +261,17 @@ const AddOffer = () => {
   const handleUpdate = async (offerId, currentImageUrl) => {
     if (!editName.trim() || !editDiscount || !editValidUntil) {
       setMessage('Please fill out all required fields.');
+      return;
+    }
+
+    // Validate min order value and max discount if provided
+    if (editMinOrderValue && isNaN(Number(editMinOrderValue))) {
+      setMessage("Please enter a valid minimum order value.");
+      return;
+    }
+
+    if (editMaxDiscount && isNaN(Number(editMaxDiscount))) {
+      setMessage("Please enter a valid maximum discount amount.");
       return;
     }
 
@@ -252,8 +296,8 @@ const AddOffer = () => {
         }
       }
 
-      // Update offer in Firestore
-      await updateDoc(doc(db, 'offers', offerId), {
+      // Prepare update data
+      const updateData = {
         name: editName.trim(),
         description: editDescription.trim(),
         discount: Number(editDiscount),
@@ -261,7 +305,19 @@ const AddOffer = () => {
         couponCode: editCouponCode.trim() || "", // Make couponCode optional
         imageUrl: imageUrl,
         updatedAt: serverTimestamp()
-      });
+      };
+
+      // Add optional fields if they have values
+      if (editMinOrderValue && editMinOrderValue.trim() !== "") {
+        updateData.minOrderValue = Number(editMinOrderValue);
+      }
+
+      if (editMaxDiscount && editMaxDiscount.trim() !== "") {
+        updateData.maxDiscount = Number(editMaxDiscount);
+      }
+
+      // Update offer in Firestore
+      await updateDoc(doc(db, 'offers', offerId), updateData);
 
       setMessage('Offer updated successfully!');
       cancelEdit();
@@ -367,6 +423,39 @@ const AddOffer = () => {
               </div>
             </div>
 
+            {/* NEW: Minimum Order Value and Maximum Discount */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm sm:text-base font-medium">
+                  Minimum Order Value (₹)
+                  <span className="text-gray-500 font-normal"> - Optional</span>
+                </label>
+                <input
+                  type="number"
+                  className="p-3 sm:p-2 border border-gray-300 rounded w-full focus:border-gray-400 focus:outline-none text-base"
+                  value={minOrderValue}
+                  onChange={(e) => setMinOrderValue(e.target.value)}
+                  placeholder="999"
+                />
+                <p className="text-xs text-gray-500">Leave empty for no minimum order requirement</p>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm sm:text-base font-medium">
+                  Maximum Discount (₹)
+                  <span className="text-gray-500 font-normal"> - Optional</span>
+                </label>
+                <input
+                  type="number"
+                  className="p-3 sm:p-2 border border-gray-300 rounded w-full focus:border-gray-400 focus:outline-none text-base"
+                  value={maxDiscount}
+                  onChange={(e) => setMaxDiscount(e.target.value)}
+                  placeholder="500"
+                />
+                <p className="text-xs text-gray-500">Cap the maximum discount amount</p>
+              </div>
+            </div>
+
             {/* Submit */}
             <button
               type="submit"
@@ -438,6 +527,24 @@ const AddOffer = () => {
                             placeholder="Coupon code"
                           />
                         </div>
+
+                        {/* NEW: Edit Min Order Value and Max Discount */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <input
+                            type="number"
+                            value={editMinOrderValue}
+                            onChange={(e) => setEditMinOrderValue(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded focus:border-blue-500 outline-none"
+                            placeholder="Min order value (₹)"
+                          />
+                          <input
+                            type="number"
+                            value={editMaxDiscount}
+                            onChange={(e) => setEditMaxDiscount(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded focus:border-blue-500 outline-none"
+                            placeholder="Max discount (₹)"
+                          />
+                        </div>
                         
                         <div className="flex items-center gap-4">
                           <img
@@ -507,6 +614,21 @@ const AddOffer = () => {
                                 }
                               </span>
                             </div>
+                            
+                            {/* NEW: Display Min Order Value and Max Discount */}
+                            <div className="flex flex-wrap gap-4 mt-2 text-sm">
+                              {offer.minOrderValue && (
+                                <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                                  Min Order: ₹{offer.minOrderValue}
+                                </span>
+                              )}
+                              {offer.maxDiscount && (
+                                <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                  Max Discount: ₹{offer.maxDiscount}
+                                </span>
+                              )}
+                            </div>
+
                             <p className="text-xs text-gray-500 mt-2">
                               Created: {
                                 offer.createdAt && typeof offer.createdAt.toDate === 'function' 

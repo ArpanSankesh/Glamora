@@ -97,7 +97,7 @@ const Products = () => {
 
   if (loading) {
     return (
-      <div className="max-w-6xl w-full lg:py-36 lg:px-26 px-8 py-20">
+      <div className="max-w-6xl w-full  lg:px-26 px-8 py-10">
         <div className="flex justify-center items-center min-h-[400px]">
           <div className="flex flex-col items-center gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-accent)]"></div>
@@ -151,7 +151,7 @@ const Products = () => {
                        !['undefined', 'null', 'false'].includes(displayImage.toLowerCase());
 
   return (
-    <div className="max-w-6xl w-full lg:py-36 lg:px-26 px-8 py-20">
+    <div className="max-w-6xl w-full lg:px-26 px-8 py-10 pb-20">
       <div className="w-full flex flex-col justify-between md:flex-row lg:gap-16 gap-6 mt-4">
         {/* Product Image */}
         <div className="flex gap-3">

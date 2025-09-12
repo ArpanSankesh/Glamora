@@ -5,7 +5,7 @@ const Hero = () => {
   const navigate = useNavigate();
   return (
     <div className='w-full h-screen flex items-center px-6 md:px-16 lg:px-20 xl:px-26 '>
-      <div className='w-full h-screen absolute top-0 left-0 bg-[var(--color-overlay)] opacity-50 z-10'></div>
+      <div className='w-full h-full absolute top-0 left-0 bg-[var(--color-overlay)] opacity-50 z-10'></div>
       <div
         className="absolute inset-0 bg-cover bg-[30%_center] md:bg-center z-0"
         style={{ backgroundImage: "url('/assets/hero.jpg')" }}
@@ -15,7 +15,7 @@ const Hero = () => {
         <div className='text-[var(--color-text)] md:text-left text-center'>
           {/* <p className=' xl:text-2xl md:text-xl sm:text-lg text-md ml-[6px] font-medium tracking-wider text-[var(--color-accent)]'>LUXURY BEAUTY SERVICES</p> */}
           <p className='mt-2 md:mt-4 xl:text-6xl md:text-3xl text-2xl ml-[6px] font-extrabold  tracking-wider text-[var(--color-text)]'>SALON AT HOME</p>
-          <h1 className='xl:text-[7rem] md:text-8xl text-[3.25rem] font-bold leading-[0.9]'>Reveal Your, <br /> Inner Beauty</h1>
+          <h1 className='xl:text-[7rem] md:text-8xl text-[3.25rem] font-bold leading-[0.9]'>Reveal Your <br /> Inner Beauty</h1>
         </div>
         <button type="button" onClick={()=> (navigate('/services'))} className="cursor-pointer md:w-50 md:h-15 w-40 h-15 ml-[6px] bg-[var(--color-accent)] text-[var(--color-text)] border border-[var(--color-accent)] md:inline text-lg font-semibold hover:bg-[var(--color-text)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)] active:scale-95 transition-all rounded-2xl">
           Book Now

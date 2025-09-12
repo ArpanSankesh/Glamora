@@ -5,10 +5,10 @@ const AboutSection = () => {
   const navigate = useNavigate();
   return (
     <div className="w-full flex justify-center items-center px-6 md:px-16 lg:px-24 xl:px-32 py-20 ">
-      <div className="relative w-full h-auto bg-[var(--color-accent)] rounded-3xl flex flex-col md:flex-row items-center justify-between px-10 py-12 lg:py-20">
+      <div className="relative w-full h-auto bg-[var(--color-accent)] rounded-3xl flex flex-col md:flex-row items-center justify-center px-10 py-12 lg:py-20">
         
         {/* Text Content */}
-        <div className="max-w-lg z-10 text-center md:text-left">
+        <div className="max-w-lg z-10 text-center">
           <h1 className="text-[var(--color-text)] text-4xl md:text-4xl xl:text-6xl font-bold leading-tight">
             Your Glow,<br /> Our Passion
           </h1>
@@ -20,14 +20,7 @@ const AboutSection = () => {
           </button>
         </div>
 
-        {/* Image */}
-        <div className="hidden md:flex absolute bottom-0 right-[-50px] w-full md:w-auto mt-10 md:mt-0  justify-center z-15">
-          <img
-            src="/assets/3d.png" 
-            alt="About"
-            className="xl:h-[620px] lg:h-[500px] object-contain"
-          />
-        </div>
+        
       </div>
     </div>
   )

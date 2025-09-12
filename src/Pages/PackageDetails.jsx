@@ -111,7 +111,7 @@ const PackageDetails = () => {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto py-30">
+    <div className="p-6 max-w-4xl mx-auto py-15">
       <div className="w-full mb-6">
         {pkgData.imageUrl ? (
           <img

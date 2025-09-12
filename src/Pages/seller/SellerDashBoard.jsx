@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faList, faBoxOpen, faTags, faClipboardList,  faCommentDots, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faList, faBoxOpen, faTags, faClipboardList, faCommentDots, faPlus, faStar, faQuoteLeft } from '@fortawesome/free-solid-svg-icons';
 
 const SellerDashBoard = () => {
 
@@ -11,10 +11,12 @@ const SellerDashBoard = () => {
     const sidebarLinks = [
         { name: "List Services", path: "/seller/list-services", icon: <FontAwesomeIcon icon={faList} /> },
         { name: "Orders", path: "/seller", icon: <FontAwesomeIcon icon={faCommentDots} /> },
-        { name: "Add Service", path: "/seller/add-services", icon: <FontAwesomeIcon icon={faPlus} /> },         // Changed to faPlus
+        { name: "Add Service", path: "/seller/add-services", icon: <FontAwesomeIcon icon={faPlus} /> },
         { name: "Add Package", path: "/seller/add-package", icon: <FontAwesomeIcon icon={faBoxOpen} /> },
         { name: "Add Categories", path: "/seller/add-category", icon: <FontAwesomeIcon icon={faTags} /> },
         { name: "Add Offer", path: "/seller/add-offer", icon: <FontAwesomeIcon icon={faClipboardList} /> },
+        { name: "Add Testimonial", path: "/seller/add-testimonial", icon: <FontAwesomeIcon icon={faQuoteLeft} /> },
+        { name: "Manage Reviews", path: "/seller/manage-testimonials", icon: <FontAwesomeIcon icon={faStar} /> },
     ];
 
     return (

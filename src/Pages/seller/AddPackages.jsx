@@ -13,12 +13,10 @@ const AddPackage = () => {
   const [packagePrice, setPackagePrice] = useState("");
   const [pkgImageFile, setPkgImageFile] = useState(null);
   const [pkgImagePreview, setPkgImagePreview] = useState(EMPTY_PREVIEW);
-  const [maxServices, setMaxServices] = useState(4); // NEW field
+  const [maxServices, setMaxServices] = useState(4);
 
-  // Services inside the package
-  const [items, setItems] = useState([
-    { name: "", price: "", imageFile: null, preview: EMPTY_PREVIEW },
-  ]);
+  // Services inside the package (start empty ✅)
+  const [items, setItems] = useState([]);
 
   // UI
   const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +63,7 @@ const AddPackage = () => {
     setPkgImageFile(null);
     setPkgImagePreview(EMPTY_PREVIEW);
     setMaxServices(4);
-    setItems([{ name: "", price: "", imageFile: null, preview: EMPTY_PREVIEW }]);
+    setItems([]); // reset to empty ✅
   };
 
   const handleSubmit = async (e) => {
@@ -75,16 +73,20 @@ const AddPackage = () => {
       setMessage("Package name, price, and image are required.");
       return;
     }
-    if (!maxServices || maxServices < 1) {
-      setMessage("Max selectable services must be at least 1.");
+    if (maxServices < 0) {
+      setMessage("Max selectable services cannot be negative.");
       return;
     }
-    const invalidItem = items.find(
-      (it) => !it.name || !it.price || !it.imageFile
-    );
-    if (invalidItem) {
-      setMessage("Every service must have name, price, and image.");
-      return;
+
+    // Validate services only if user added any ✅
+    if (items.length > 0) {
+      const invalidItem = items.find(
+        (it) => !it.name || !it.price || !it.imageFile
+      );
+      if (invalidItem) {
+        setMessage("Every service must have name, price, and image.");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -96,22 +98,24 @@ const AddPackage = () => {
       await uploadBytes(pkgRef, pkgImageFile);
       const packageImageUrl = await getDownloadURL(pkgRef);
 
-      // Upload each service image
-      const folderStamp = Date.now();
+      // Upload services (if any)
       const uploadedItems = [];
-      for (let i = 0; i < items.length; i++) {
-        const file = items[i].imageFile;
-        const itemRef = ref(
-          storage,
-          `package-items/${packageName}-${folderStamp}/item-${i}-${file.name}`
-        );
-        await uploadBytes(itemRef, file);
-        const url = await getDownloadURL(itemRef);
-        uploadedItems.push({
-          name: items[i].name.trim(),
-          price: Number(items[i].price),
-          imageUrl: url,
-        });
+      if (items.length > 0) {
+        const folderStamp = Date.now();
+        for (let i = 0; i < items.length; i++) {
+          const file = items[i].imageFile;
+          const itemRef = ref(
+            storage,
+            `package-items/${packageName}-${folderStamp}/item-${i}-${file.name}`
+          );
+          await uploadBytes(itemRef, file);
+          const url = await getDownloadURL(itemRef);
+          uploadedItems.push({
+            name: items[i].name.trim(),
+            price: Number(items[i].price),
+            imageUrl: url,
+          });
+        }
       }
 
       // Save to Firestore
@@ -122,7 +126,7 @@ const AddPackage = () => {
         imageUrl: packageImageUrl,
         items: uploadedItems,
         itemsCount: uploadedItems.length,
-        maxServices, // NEW
+        maxServices,
         createdAt: serverTimestamp(),
       });
 
@@ -188,10 +192,10 @@ const AddPackage = () => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Max Selectable Services</label>
+            <label className="text-sm font-medium">Selectable Services</label>
             <input
               type="number"
-              min="1"
+              min="0"
               className="p-2 border border-gray-300 rounded"
               value={maxServices}
               onChange={(e) => setMaxServices(Number(e.target.value))}
@@ -253,7 +257,6 @@ const AddPackage = () => {
                     className="p-2 border border-gray-300 rounded flex-1"
                     value={it.name}
                     onChange={(e) => updateItemField(idx, "name", e.target.value)}
-                    required
                   />
                   <input
                     type="number"
@@ -261,14 +264,12 @@ const AddPackage = () => {
                     className="p-2 border border-gray-300 rounded flex-1"
                     value={it.price}
                     onChange={(e) => updateItemField(idx, "price", e.target.value)}
-                    required
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => removeItem(idx)}
                   className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50"
-                  disabled={items.length === 1}
                 >
                   Remove
                 </button>

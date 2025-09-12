@@ -4,7 +4,7 @@ import ContactSection from '../Components/ContactSection'
 
 const About = () => {
   return (
-    <div className='w-full pt-35'>
+    <div className='w-full pt-15'>
         <AboutPoster />
         <ContactSection />
     </div>
