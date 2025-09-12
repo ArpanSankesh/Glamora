@@ -155,24 +155,25 @@ const AddOffer = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // FIX: Removed 'discount' from the required fields check
-    if (!offerName || !validUntil || !imageFile) {
-      setMessage("Please fill out all required fields.");
+    
+    if (!offerName || !validUntil || !imageFile || !couponCode) {
+      setMessage("Please fill out all required fields: Offer Name, Valid Until, Image, and Coupon Code.");
       return;
     }
     
-    // FIX: Add a new validation check: either discount or free service must be provided
     if (!discount && !freeServiceId) {
         setMessage("Please provide either a Discount (%) or a Free Service.");
         return;
     }
 
-    if (minOrderValue && isNaN(Number(minOrderValue))) {
+    const minVal = minOrderValue.toString().trim();
+    if (minVal && isNaN(Number(minVal))) {
       setMessage("Please enter a valid minimum order value.");
       return;
     }
 
-    if (maxDiscount && isNaN(Number(maxDiscount))) {
+    const maxDisc = maxDiscount.toString().trim();
+    if (maxDisc && isNaN(Number(maxDisc))) {
       setMessage("Please enter a valid maximum discount amount.");
       return;
     }
@@ -185,19 +186,19 @@ const AddOffer = () => {
       const offerData = {
         name: offerName.trim(),
         description: description.trim(),
-        discount: Number(discount) || 0, // FIX: Save discount as 0 if not provided
+        discount: Number(discount) || 0,
         validUntil,
         couponCode: couponCode.trim() || "",
         imageUrl,
         createdAt: serverTimestamp(),
       };
 
-      if (minOrderValue && minOrderValue.trim() !== "") {
-        offerData.minOrderValue = Number(minOrderValue);
+      if (minVal !== "") {
+        offerData.minOrderValue = Number(minVal);
       }
 
-      if (maxDiscount && maxDiscount.trim() !== "") {
-        offerData.maxDiscount = Number(maxDiscount);
+      if (maxDisc !== "") {
+        offerData.maxDiscount = Number(maxDisc);
       }
 
       if (freeServiceId) {
@@ -256,11 +257,11 @@ const AddOffer = () => {
     setEditingOffer(offer.id);
     setEditName(offer.name);
     setEditDescription(offer.description || "");
-    setEditDiscount(offer.discount);
+    setEditDiscount(offer.discount || "");
     setEditValidUntil(offer.validUntil);
     setEditCouponCode(offer.couponCode || "");
-    setEditMinOrderValue(offer.minOrderValue || "");
-    setEditMaxDiscount(offer.maxDiscount || "");
+    setEditMinOrderValue(offer.minOrderValue?.toString() || "");
+    setEditMaxDiscount(offer.maxDiscount?.toString() || "");
     setEditFreeService(offer.freeService || null);
     setEditImagePreview(offer.imageUrl);
     setEditImage(null);
@@ -281,24 +282,24 @@ const AddOffer = () => {
   };
 
   const handleUpdate = async (offerId, currentImageUrl) => {
-    // FIX: Removed 'editDiscount' from the required fields check
-    if (!editName.trim() || !editValidUntil) {
+    if (!editName.trim() || !editValidUntil || !editCouponCode) {
       setMessage('Please fill out all required fields.');
       return;
     }
     
-    // FIX: Add a new validation check: either discount or free service must be provided
     if (!editDiscount && !editFreeService) {
         setMessage("Please provide either a Discount (%) or a Free Service.");
         return;
     }
 
-    if (editMinOrderValue && isNaN(Number(editMinOrderValue))) {
+    const trimmedMinOrderValue = editMinOrderValue?.toString().trim();
+    if (trimmedMinOrderValue && isNaN(Number(trimmedMinOrderValue))) {
       setMessage("Please enter a valid minimum order value.");
       return;
     }
 
-    if (editMaxDiscount && isNaN(Number(editMaxDiscount))) {
+    const trimmedMaxDiscount = editMaxDiscount?.toString().trim();
+    if (trimmedMaxDiscount && isNaN(Number(trimmedMaxDiscount))) {
       setMessage("Please enter a valid maximum discount amount.");
       return;
     }
@@ -325,21 +326,21 @@ const AddOffer = () => {
       const updateData = {
         name: editName.trim(),
         description: editDescription.trim(),
-        discount: Number(editDiscount) || 0, // FIX: Save discount as 0 if not provided
+        discount: Number(editDiscount) || 0,
         validUntil: editValidUntil,
         couponCode: editCouponCode.trim() || "",
         imageUrl: imageUrl,
         updatedAt: serverTimestamp()
       };
 
-      if (editMinOrderValue && editMinOrderValue.trim() !== "") {
-        updateData.minOrderValue = Number(editMinOrderValue);
+      if (trimmedMinOrderValue) {
+        updateData.minOrderValue = Number(trimmedMinOrderValue);
       } else {
         delete updateData.minOrderValue;
       }
 
-      if (editMaxDiscount && editMaxDiscount.trim() !== "") {
-        updateData.maxDiscount = Number(editMaxDiscount);
+      if (trimmedMaxDiscount) {
+        updateData.maxDiscount = Number(trimmedMaxDiscount);
       } else {
         delete updateData.maxDiscount;
       }
@@ -668,7 +669,7 @@ const AddOffer = () => {
                       </div>
                     ) : (
                       // View Mode
-                      <div className="flex items-start justify-between">
+                      <div className="flex flex-col md:flex-row gap-4 items-start justify-between">
                         <div className="flex items-start gap-4 flex-1">
                           <img
                             src={offer.imageUrl}
