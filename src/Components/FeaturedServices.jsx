@@ -32,7 +32,6 @@ const FeaturedServices = () => {
           price: parseInt(doc.data().price) || 0, // Ensure price is number
         }));
 
-        console.log('🔥 Fetched services from Firebase:', servicesData);
         setServices(servicesData);
       } catch (error) {
         console.error('Error fetching services:', error);

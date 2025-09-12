@@ -33,6 +33,8 @@ const Booking = () => {
   const [availableCoupons, setAvailableCoupons] = useState([]);
   const [couponLoading, setCouponLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  const [freeServiceItem, setFreeServiceItem] = useState(null); // NEW: State for the free service item to be added to cart UI
 
   // EmailJS configuration
   const EMAILJS_SERVICE_ID = 'service_74hljrr';
@@ -83,7 +85,6 @@ const Booking = () => {
     setCouponLoading(true);
     
     try {
-      // Find coupon in available coupons
       const coupon = availableCoupons.find(
         c => c.couponCode && c.couponCode.toLowerCase() === couponCode.toLowerCase()
       );
@@ -94,7 +95,6 @@ const Booking = () => {
         return;
       }
 
-      // Check if coupon is still valid
       const today = new Date().toISOString().split('T')[0];
       if (coupon.validUntil < today) {
         toast.error("This coupon has expired");
@@ -102,7 +102,6 @@ const Booking = () => {
         return;
       }
 
-      // Check minimum order value if specified
       if (coupon.minOrderValue && subtotal < coupon.minOrderValue) {
         toast.error(`Minimum order value of ₹${coupon.minOrderValue} required for this coupon`);
         setCouponLoading(false);
@@ -110,7 +109,23 @@ const Booking = () => {
       }
 
       setAppliedCoupon(coupon);
-      toast.success(`Coupon applied! You saved ₹${calculateDiscount(coupon)}`);
+      
+      // NEW: If coupon has a free service, add it to the local state for display
+      if (coupon.freeService) {
+        setFreeServiceItem({ ...coupon.freeService, price: 0, isFree: true, quantity: 1, id: coupon.freeService.id });
+      }
+
+      // NEW: Show toast message based on discount and/or free service
+      if (coupon.discount > 0 && coupon.freeService) {
+        toast.success(`Coupon applied! You saved ₹${calculateDiscount(coupon)} and got a free ${coupon.freeService.name}!`);
+      } else if (coupon.discount > 0) {
+        toast.success(`Coupon applied! You saved ₹${calculateDiscount(coupon)}`);
+      } else if (coupon.freeService) {
+        toast.success(`Coupon applied! You received a free ${coupon.freeService.name}!`);
+      } else {
+        toast.success("Coupon applied successfully!");
+      }
+      
     } catch (error) {
       console.error('Error applying coupon:', error);
       toast.error("Failed to apply coupon");
@@ -123,22 +138,24 @@ const Booking = () => {
   const removeCoupon = () => {
     setAppliedCoupon(null);
     setCouponCode("");
+    setFreeServiceItem(null); // NEW: Remove the free service item
     toast.success("Coupon removed");
   };
 
   // Calculate discount amount
   const calculateDiscount = (coupon) => {
-    if (!coupon) return 0;
+    if (!coupon || !coupon.discount) return 0;
     
     const discountAmount = (subtotal * coupon.discount) / 100;
     
-    // Apply maximum discount limit if specified
     if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
       return coupon.maxDiscount;
     }
     
     return Math.round(discountAmount);
   };
+  
+  const allCartItems = [...cartItems, ...(freeServiceItem ? [freeServiceItem] : [])];
 
   // Send email notification to seller
   const sendSellerNotification = async (orderDetails) => {
@@ -155,6 +172,7 @@ Order Details:
 - Date: ${orderDetails.date}
 - Time: ${orderDetails.time}
 - Items: ${orderDetails.items.map(item => `${item.name} (Qty: ${item.quantity})`).join(', ')}
+${orderDetails.freeService ? `- Free Service: ${orderDetails.freeService}` : ''}
 - Subtotal: ₹${orderDetails.subtotal}
 ${orderDetails.discount > 0 ? `- Discount (${orderDetails.couponCode}): -₹${orderDetails.discount}` : ''}
 - Service Charge: ₹${orderDetails.serviceCharge}
@@ -252,6 +270,20 @@ Please check your admin dashboard for complete order details.`,
         offerPrice: it.offerPrice ?? null,
         quantity: it.quantity || 1,
       }));
+      
+      // If a free service was applied, add it to the normalized items list for saving to Firestore
+      if (freeServiceItem) {
+          normalizedItems.push({
+              id: freeServiceItem.id,
+              name: freeServiceItem.name,
+              imageUrl: freeServiceItem.imageUrl,
+              price: 0,
+              offerPrice: 0,
+              isFree: true,
+              quantity: 1,
+          });
+      }
+
 
       // Create order object with coupon details
       const orderData = {
@@ -267,6 +299,7 @@ Please check your admin dashboard for complete order details.`,
         discount,
         couponCode: appliedCoupon?.couponCode || "",
         couponName: appliedCoupon?.name || "",
+        freeService: freeServiceItem?.name || "",
         serviceCharge,
         total,
         status: "Pending",
@@ -309,11 +342,11 @@ Please check your admin dashboard for complete order details.`,
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">Your Services</h2>
                 <span className="bg-[var(--color-opaque)] text-[var(--color-secondary)] px-3 py-1 rounded-full text-sm font-medium">
-                  {cartItems.length} {cartItems.length === 1 ? 'Service' : 'Services'}
+                  {allCartItems.length} {allCartItems.length === 1 ? 'Service' : 'Services'}
                 </span>
               </div>
               
-              {cartItems.length === 0 ? (
+              {allCartItems.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                     <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,7 +363,7 @@ Please check your admin dashboard for complete order details.`,
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {cartItems.map((product) => {
+                  {allCartItems.map((product) => {
                     const displayImage = product.image || product.imageUrl || product.packageImageUrl;
                     const hasValidImage = displayImage && 
                                          typeof displayImage === 'string' && 
@@ -371,36 +404,44 @@ Please check your admin dashboard for complete order details.`,
                           )}
                         </div>
 
-                        {/* Quantity */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-600 text-sm">Qty:</span>
-                          <select
-                            value={product.quantity || 1}
-                            onChange={e => updateQuantity(product.id, Number(e.target.value))}
-                            className="border border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:outline-none"
-                          >
-                            {[...Array(10)].map((_, idx) => (
-                              <option key={idx + 1} value={idx + 1}>{idx + 1}</option>
-                            ))}
-                          </select>
-                        </div>
+                        {/* Quantity (only for regular items) */}
+                        {!product.isFree && (
+                           <div className="flex items-center gap-2">
+                             <span className="text-gray-600 text-sm">Qty:</span>
+                             <select
+                               value={product.quantity || 1}
+                               onChange={e => updateQuantity(product.id, Number(e.target.value))}
+                               className="border border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:outline-none"
+                             >
+                               {[...Array(10)].map((_, idx) => (
+                                 <option key={idx + 1} value={idx + 1}>{idx + 1}</option>
+                               ))}
+                             </select>
+                           </div>
+                        )}
 
                         {/* Price */}
                         <div className="text-right">
-                          <p className="font-semibold text-gray-900">
-                            ₹{(product.offerPrice !== undefined ? product.offerPrice : product.price) * (product.quantity || 1)}
-                          </p>
+                          {product.isFree ? (
+                             <p className="font-semibold text-[var(--color-secondary)]">FREE</p>
+                          ) : (
+                             <p className="font-semibold text-gray-900">
+                               ₹{(product.offerPrice !== undefined ? product.offerPrice : product.price) * (product.quantity || 1)}
+                             </p>
+                          )}
                         </div>
 
-                        {/* Remove */}
-                        <button
-                          onClick={() => removeFromCart(product.id)}
-                          className="text-red-500 hover:text-red-700 p-1"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
+                        {/* Remove (only for regular items) */}
+                        {!product.isFree && (
+                           <button
+                             onClick={() => removeFromCart(product.id)}
+                             className="text-red-500 hover:text-red-700 p-1"
+                           >
+                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                             </svg>
+                           </button>
+                        )}
                       </div>
                     );
                   })}
@@ -449,7 +490,9 @@ Please check your admin dashboard for complete order details.`,
                               <div>
                                 <p className="font-medium text-sm text-green-800">{coupon.name}</p>
                                 <p className="text-xs text-green-600">
-                                  {coupon.discount}% OFF{coupon.couponCode && ` • Code: ${coupon.couponCode}`}
+                                  {coupon.discount > 0 && `${coupon.discount}% OFF`}
+                                  {coupon.freeService && ` • FREE ${coupon.freeService.name}`}
+                                  {coupon.couponCode && ` • Code: ${coupon.couponCode}`}
                                   {coupon.minOrderValue && ` • Min order: ₹${coupon.minOrderValue}`}
                                 </p>
                               </div>
@@ -474,7 +517,9 @@ Please check your admin dashboard for complete order details.`,
                     <div>
                       <p className="font-medium text-green-800">{appliedCoupon.name}</p>
                       <p className="text-sm text-green-600">
-                        Code: {appliedCoupon.couponCode} • You saved ₹{discount}
+                        Code: {appliedCoupon.couponCode}
+                        {appliedCoupon.discount > 0 && ` • You saved ₹${discount}`}
+                        {appliedCoupon.freeService && ` • Free: ${appliedCoupon.freeService.name}`}
                       </p>
                     </div>
                     <button
@@ -704,8 +749,7 @@ Please check your admin dashboard for complete order details.`,
                     <span className="font-medium whitespace-nowrap">₹{subtotal.toFixed(0)}</span>
                   </div>
                   
-                  {/* Show discount if coupon is applied */}
-                  {appliedCoupon && discount > 0 && (
+                  {appliedCoupon && appliedCoupon.discount > 0 && (
                     <div className="flex justify-between items-center text-sm sm:text-base text-green-600">
                       <span className="truncate mr-2">
                         Discount ({appliedCoupon.couponCode})
@@ -713,10 +757,17 @@ Please check your admin dashboard for complete order details.`,
                       <span className="font-medium whitespace-nowrap">-₹{discount}</span>
                     </div>
                   )}
+
+                  {freeServiceItem && (
+                     <div className="flex justify-between items-center text-sm sm:text-base text-cyan-600">
+                        <span className="truncate mr-2">Free Service</span>
+                        <span className="font-medium whitespace-nowrap">{freeServiceItem.name}</span>
+                     </div>
+                  )}
                   
                   <div className="flex justify-between items-center text-sm sm:text-base">
                     <span className="truncate mr-2">Service Charge</span>
-                    <span className={`font-medium whitespace-nowrap ${serviceCharge === 0 ? 'text-[var(--color-secondary)]' : 'text-gray-600'}`}>
+                    <span className={`font-medium whitespace-nowap ${serviceCharge === 0 ? 'text-[var(--color-secondary)]' : 'text-gray-600'}`}>
                       {serviceCharge === 0 ? 'FREE' : `₹${serviceCharge}`}
                     </span>
                   </div>
@@ -748,7 +799,8 @@ Please check your admin dashboard for complete order details.`,
                     <li>• Quality Guaranteed</li>
                     <li>• Customer Support</li>
                     {discountedSubtotal >= 999 && <li>• FREE Service Charge</li>}
-                    {appliedCoupon && <li>• {appliedCoupon.discount}% Discount Applied</li>}
+                    {appliedCoupon && appliedCoupon.discount > 0 && <li>• {appliedCoupon.discount}% Discount Applied</li>}
+                    {freeServiceItem && <li>• FREE {freeServiceItem.name} Included!</li>}
                   </ul>
                 </div>
 

@@ -57,7 +57,7 @@ const ProductCard = ({ id, name, description, category, time, price, offerPrice,
                             e.target.style.display = 'none';
                             e.target.nextSibling.style.display = 'flex';
                         }}
-                        onLoad={() => console.log('Image loaded successfully:', displayImage)}
+                        onLoad={(displayImage)}
                     />
                 ) : null}
                 {/* Fallback - always present but hidden when image loads */}

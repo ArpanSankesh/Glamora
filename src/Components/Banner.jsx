@@ -16,14 +16,12 @@ const Banner = () => {
     const fetchPackages = async () => {
       try {
         setLoading(true);
-        console.log('Fetching packages from Firebase...');
 
         const querySnapshot = await getDocs(collection(db, 'packages'));
         const packagesData = [];
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          console.log(`Package ${doc.id}:`, data);
 
           if (!data.imageUrl) {
             console.warn(`Package ${doc.id} has no imageUrl`);
@@ -35,7 +33,6 @@ const Banner = () => {
           });
         });
 
-        console.log('Total packages fetched:', packagesData.length);
         setPackages(packagesData);
 
         if (packagesData.length === 0) {
@@ -87,7 +84,6 @@ const Banner = () => {
 
   const handlePackageClick = (packageId) => {
     if (isTransitioning) return;
-    console.log('Navigating to package:', packageId);
     navigate(`/package/${packageId}`);
   };
 
@@ -97,7 +93,6 @@ const Banner = () => {
   };
 
   const handleImageLoad = (packageId, imageUrl) => {
-    console.log(`Image loaded successfully for package ${packageId}:`, imageUrl);
     setImageErrors(prev => ({ ...prev, [packageId]: false }));
   };
 

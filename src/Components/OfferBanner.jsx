@@ -13,7 +13,6 @@ const OfferBanner = () => {
     fetchAllActiveOffers();
   }, []);
 
-  // Trigger re-animation when offers change
   useEffect(() => {
     if (offers.length > 0) {
       setAnimationKey(prev => prev + 1);
@@ -24,10 +23,8 @@ const OfferBanner = () => {
     try {
       setLoading(true);
       
-      // Get current date in YYYY-MM-DD format
       const today = new Date().toISOString().split('T')[0];
       
-      // Query to get ALL active offers (where validUntil is greater than or equal to today)
       const q = query(
         collection(db, 'offers'),
         where('validUntil', '>=', today),
@@ -43,7 +40,6 @@ const OfferBanner = () => {
         }));
         setOffers(offersData);
       } else {
-        // If no active offers, get the latest created offers as fallback
         const fallbackQuery = query(
           collection(db, 'offers'),
           orderBy('createdAt', 'desc')
@@ -70,11 +66,26 @@ const OfferBanner = () => {
     setIsVisible(false);
   };
 
+  // FIX: Updated logic to conditionally show discount text
   const createOfferText = (offer) => {
-    let text = `${offer.name} | ${offer.discount}% OFF`;
+    let text = `${offer.name}`;
     
+    // Only add discount text if discount value is greater than 0
+    if (offer.discount > 0) {
+      text += ` | ${offer.discount}% OFF`;
+    }
+
     if (offer.minOrderValue) {
       text += ` on Orders Above ₹${offer.minOrderValue}`;
+    }
+
+    // NEW: Add free service text if it exists
+    if (offer.freeService && offer.freeService.name) {
+      if (offer.discount > 0) {
+          text += ` & Get a Free ${offer.freeService.name}`;
+      } else {
+          text += ` | Free ${offer.freeService.name}`;
+      }
     }
     
     if (offer.couponCode) {

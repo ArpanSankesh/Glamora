@@ -13,8 +13,10 @@ const AddOffer = () => {
   const [discount, setDiscount] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [couponCode, setCouponCode] = useState("");
-  const [minOrderValue, setMinOrderValue] = useState(""); // New field
-  const [maxDiscount, setMaxDiscount] = useState(""); // Optional max discount cap
+  const [minOrderValue, setMinOrderValue] = useState("");
+  const [maxDiscount, setMaxDiscount] = useState("");
+  const [freeServiceId, setFreeServiceId] = useState("");
+  const [allServices, setAllServices] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(EMPTY_PREVIEW);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +25,7 @@ const AddOffer = () => {
   // List states
   const [offers, setOffers] = useState([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
 
   // Edit states
   const [editingOffer, setEditingOffer] = useState(null);
@@ -31,34 +34,27 @@ const AddOffer = () => {
   const [editDiscount, setEditDiscount] = useState("");
   const [editValidUntil, setEditValidUntil] = useState("");
   const [editCouponCode, setEditCouponCode] = useState("");
-  const [editMinOrderValue, setEditMinOrderValue] = useState(""); // New edit field
-  const [editMaxDiscount, setEditMaxDiscount] = useState(""); // New edit field
+  const [editMinOrderValue, setEditMinOrderValue] = useState("");
+  const [editMaxDiscount, setEditMaxDiscount] = useState("");
+  const [editFreeService, setEditFreeService] = useState(null);
   const [editImage, setEditImage] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Fetch offers on component mount
+  // Fetch offers and services on component mount
   useEffect(() => {
     fetchOffers();
+    fetchServices();
   }, []);
 
   const fetchOffers = async () => {
     setIsLoadingOffers(true);
     try {
-      console.log("Fetching offers from Firestore...");
       const querySnapshot = await getDocs(collection(db, "offers"));
-      console.log("Query snapshot size:", querySnapshot.size);
-      
-      const offersData = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        console.log("Offer data:", { id: doc.id, ...data });
-        return {
-          id: doc.id,
-          ...data,
-        };
-      });
-      
-      console.log("Total offers fetched:", offersData.length);
+      const offersData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setOffers(offersData);
     } catch (error) {
       console.error("Error fetching offers:", error);
@@ -67,18 +63,34 @@ const AddOffer = () => {
       setIsLoadingOffers(false);
     }
   };
+  
+  const fetchServices = async () => {
+    setIsLoadingServices(true);
+    try {
+      const q = collection(db, "services");
+      const querySnapshot = await getDocs(q);
+      const servicesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setAllServices(servicesData);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      setMessage("Error loading services: " + error.message);
+    } finally {
+      setIsLoadingServices(false);
+    }
+  };
 
   const handleImageChange = (e) => {
     if (e.target.files?.[0]) {
       const file = e.target.files[0];
       
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setMessage('Please select a valid image file.');
         return;
       }
       
-      // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
         setMessage('Image size should be less than 5MB.');
         return;
@@ -93,13 +105,11 @@ const AddOffer = () => {
   const handleEditImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setMessage('Please select a valid image file.');
         return;
       }
       
-      // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
         setMessage('Image size should be less than 5MB.');
         return;
@@ -107,7 +117,6 @@ const AddOffer = () => {
 
       setEditImage(file);
       
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setEditImagePreview(reader.result);
@@ -139,18 +148,25 @@ const AddOffer = () => {
     setCouponCode("");
     setMinOrderValue("");
     setMaxDiscount("");
+    setFreeServiceId("");
     setImageFile(null);
     setImagePreview(EMPTY_PREVIEW);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!offerName || !discount || !validUntil || !imageFile) {
+    // FIX: Removed 'discount' from the required fields check
+    if (!offerName || !validUntil || !imageFile) {
       setMessage("Please fill out all required fields.");
       return;
     }
+    
+    // FIX: Add a new validation check: either discount or free service must be provided
+    if (!discount && !freeServiceId) {
+        setMessage("Please provide either a Discount (%) or a Free Service.");
+        return;
+    }
 
-    // Validate min order value and max discount if provided
     if (minOrderValue && isNaN(Number(minOrderValue))) {
       setMessage("Please enter a valid minimum order value.");
       return;
@@ -165,21 +181,17 @@ const AddOffer = () => {
     setMessage("Adding offer...");
 
     try {
-      // Upload image
       const imageUrl = await uploadImage(imageFile);
-
-      // Prepare offer data
       const offerData = {
         name: offerName.trim(),
         description: description.trim(),
-        discount: Number(discount),
+        discount: Number(discount) || 0, // FIX: Save discount as 0 if not provided
         validUntil,
-        couponCode: couponCode.trim() || "", // Make couponCode optional with fallback
+        couponCode: couponCode.trim() || "",
         imageUrl,
         createdAt: serverTimestamp(),
       };
 
-      // Add optional fields if they have values
       if (minOrderValue && minOrderValue.trim() !== "") {
         offerData.minOrderValue = Number(minOrderValue);
       }
@@ -188,12 +200,22 @@ const AddOffer = () => {
         offerData.maxDiscount = Number(maxDiscount);
       }
 
-      // Save offer
+      if (freeServiceId) {
+        const selectedService = allServices.find(s => s.id === freeServiceId);
+        if (selectedService) {
+          offerData.freeService = {
+            id: selectedService.id,
+            name: selectedService.name,
+            imageUrl: selectedService.image || selectedService.imageUrl || selectedService.packageImageUrl || "",
+          };
+        }
+      }
+
       await addDoc(collection(db, "offers"), offerData);
 
       setMessage("Offer added successfully!");
       resetForm();
-      fetchOffers(); // Refresh offers list
+      fetchOffers();
     } catch (error) {
       console.error("Error adding offer:", error);
       setMessage("Failed to add offer. Please try again.");
@@ -209,10 +231,8 @@ const AddOffer = () => {
     }
 
     try {
-      // Delete from Firestore
       await deleteDoc(doc(db, 'offers', offerId));
       
-      // Delete image from storage if it exists
       if (imageUrl && !imageUrl.includes('data:image')) {
         try {
           const imageRef = ref(storage, imageUrl);
@@ -238,9 +258,10 @@ const AddOffer = () => {
     setEditDescription(offer.description || "");
     setEditDiscount(offer.discount);
     setEditValidUntil(offer.validUntil);
-    setEditCouponCode(offer.couponCode || ""); // Handle missing couponCode
-    setEditMinOrderValue(offer.minOrderValue || ""); // Handle missing minOrderValue
-    setEditMaxDiscount(offer.maxDiscount || ""); // Handle missing maxDiscount
+    setEditCouponCode(offer.couponCode || "");
+    setEditMinOrderValue(offer.minOrderValue || "");
+    setEditMaxDiscount(offer.maxDiscount || "");
+    setEditFreeService(offer.freeService || null);
     setEditImagePreview(offer.imageUrl);
     setEditImage(null);
   };
@@ -254,17 +275,24 @@ const AddOffer = () => {
     setEditCouponCode('');
     setEditMinOrderValue('');
     setEditMaxDiscount('');
+    setEditFreeService(null);
     setEditImage(null);
     setEditImagePreview(null);
   };
 
   const handleUpdate = async (offerId, currentImageUrl) => {
-    if (!editName.trim() || !editDiscount || !editValidUntil) {
+    // FIX: Removed 'editDiscount' from the required fields check
+    if (!editName.trim() || !editValidUntil) {
       setMessage('Please fill out all required fields.');
       return;
     }
+    
+    // FIX: Add a new validation check: either discount or free service must be provided
+    if (!editDiscount && !editFreeService) {
+        setMessage("Please provide either a Discount (%) or a Free Service.");
+        return;
+    }
 
-    // Validate min order value and max discount if provided
     if (editMinOrderValue && isNaN(Number(editMinOrderValue))) {
       setMessage("Please enter a valid minimum order value.");
       return;
@@ -281,11 +309,9 @@ const AddOffer = () => {
     try {
       let imageUrl = currentImageUrl;
       
-      // If new image selected, upload it
       if (editImage) {
         imageUrl = await uploadImage(editImage);
         
-        // Delete old image from storage
         if (currentImageUrl && !currentImageUrl.includes('data:image')) {
           try {
             const oldImageRef = ref(storage, currentImageUrl);
@@ -296,27 +322,41 @@ const AddOffer = () => {
         }
       }
 
-      // Prepare update data
       const updateData = {
         name: editName.trim(),
         description: editDescription.trim(),
-        discount: Number(editDiscount),
+        discount: Number(editDiscount) || 0, // FIX: Save discount as 0 if not provided
         validUntil: editValidUntil,
-        couponCode: editCouponCode.trim() || "", // Make couponCode optional
+        couponCode: editCouponCode.trim() || "",
         imageUrl: imageUrl,
         updatedAt: serverTimestamp()
       };
 
-      // Add optional fields if they have values
       if (editMinOrderValue && editMinOrderValue.trim() !== "") {
         updateData.minOrderValue = Number(editMinOrderValue);
+      } else {
+        delete updateData.minOrderValue;
       }
 
       if (editMaxDiscount && editMaxDiscount.trim() !== "") {
         updateData.maxDiscount = Number(editMaxDiscount);
+      } else {
+        delete updateData.maxDiscount;
       }
 
-      // Update offer in Firestore
+      if (editFreeService && editFreeService.id) {
+          const selectedService = allServices.find(s => s.id === editFreeService.id);
+          if (selectedService) {
+              updateData.freeService = {
+                id: selectedService.id,
+                name: selectedService.name,
+                imageUrl: selectedService.image || selectedService.imageUrl || selectedService.packageImageUrl || "",
+              };
+          }
+      } else {
+          delete updateData.freeService;
+      }
+      
       await updateDoc(doc(db, 'offers', offerId), updateData);
 
       setMessage('Offer updated successfully!');
@@ -395,7 +435,7 @@ const AddOffer = () => {
                   className="p-3 sm:p-2 border border-gray-300 rounded w-full focus:border-gray-400 focus:outline-none text-base"
                   value={discount}
                   onChange={(e) => setDiscount(e.target.value)}
-                  required
+                  placeholder="20"
                 />
               </div>
 
@@ -423,7 +463,7 @@ const AddOffer = () => {
               </div>
             </div>
 
-            {/* NEW: Minimum Order Value and Maximum Discount */}
+            {/* Minimum Order Value & Maximum Discount */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-sm sm:text-base font-medium">
@@ -455,6 +495,30 @@ const AddOffer = () => {
                 <p className="text-xs text-gray-500">Cap the maximum discount amount</p>
               </div>
             </div>
+            
+            {/* Free Service Dropdown */}
+            <div className="flex flex-col gap-1">
+                <label className="text-sm sm:text-base font-medium">
+                    Free Service
+                    <span className="text-gray-500 font-normal"> - Optional</span>
+                </label>
+                <select
+                    className="p-3 sm:p-2 border border-gray-300 rounded w-full focus:border-gray-400 focus:outline-none text-base"
+                    value={freeServiceId}
+                    onChange={(e) => setFreeServiceId(e.target.value)}
+                    disabled={isLoadingServices}
+                >
+                    <option value="">Select a service</option>
+                    {allServices.map(service => (
+                        <option key={service.id} value={service.id}>
+                            {service.name}
+                        </option>
+                    ))}
+                </select>
+                {isLoadingServices && <p className="text-xs text-gray-500 mt-1">Loading services...</p>}
+                <p className="text-xs text-gray-500">Select a service to be included for free</p>
+            </div>
+
 
             {/* Submit */}
             <button
@@ -528,7 +592,6 @@ const AddOffer = () => {
                           />
                         </div>
 
-                        {/* NEW: Edit Min Order Value and Max Discount */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <input
                             type="number"
@@ -544,6 +607,29 @@ const AddOffer = () => {
                             className="px-3 py-2 border border-gray-300 rounded focus:border-blue-500 outline-none"
                             placeholder="Max discount (₹)"
                           />
+                        </div>
+                        
+                        <div className="flex flex-col gap-1">
+                          <label className="text-sm font-medium">Free Service</label>
+                          <select
+                              className="p-3 sm:p-2 border border-gray-300 rounded w-full focus:border-gray-400 focus:outline-none text-base"
+                              value={editFreeService ? editFreeService.id : ""}
+                              onChange={(e) => {
+                                const selectedService = allServices.find(s => s.id === e.target.value);
+                                setEditFreeService(selectedService ? {
+                                    id: selectedService.id,
+                                    name: selectedService.name,
+                                    imageUrl: selectedService.image || selectedService.imageUrl || selectedService.packageImageUrl || ""
+                                } : null);
+                              }}
+                          >
+                              <option value="">Select a service</option>
+                              {allServices.map(service => (
+                                  <option key={service.id} value={service.id}>
+                                      {service.name}
+                                  </option>
+                              ))}
+                          </select>
                         </div>
                         
                         <div className="flex items-center gap-4">
@@ -598,9 +684,11 @@ const AddOffer = () => {
                               <p className="text-sm text-gray-600 mt-1">{offer.description}</p>
                             )}
                             <div className="flex flex-wrap gap-4 mt-2 text-sm">
-                              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-                                {offer.discount}% OFF
-                              </span>
+                              {offer.discount > 0 && (
+                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                                  {offer.discount}% OFF
+                                </span>
+                              )}
                               {offer.couponCode && (
                                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded font-mono">
                                   {offer.couponCode}
@@ -615,7 +703,6 @@ const AddOffer = () => {
                               </span>
                             </div>
                             
-                            {/* NEW: Display Min Order Value and Max Discount */}
                             <div className="flex flex-wrap gap-4 mt-2 text-sm">
                               {offer.minOrderValue && (
                                 <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
@@ -625,6 +712,11 @@ const AddOffer = () => {
                               {offer.maxDiscount && (
                                 <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
                                   Max Discount: ₹{offer.maxDiscount}
+                                </span>
+                              )}
+                              {offer.freeService && (
+                                <span className="bg-cyan-100 text-cyan-800 px-2 py-1 rounded">
+                                  Free Service: {offer.freeService.name}
                                 </span>
                               )}
                             </div>
@@ -665,7 +757,6 @@ const AddOffer = () => {
         </div>
       </div>
 
-      {/* Message Display */}
       {message && (
         <p
           className={`text-center text-sm mt-6 ${
