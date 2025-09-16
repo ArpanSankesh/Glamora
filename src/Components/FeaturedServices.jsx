@@ -28,7 +28,7 @@ const FeaturedServices = () => {
           // Map Firebase fields to component props
           image: doc.data().imageUrl, // Map imageUrl to image for ProductCard
           category: doc.data().categoryName, // Map categoryName to category
-          time: doc.data().time ? `${doc.data().time} min` : null, // Format time display
+          time: doc.data().time ? `${doc.data().time} ` : null, // Format time display
           price: parseInt(doc.data().price) || 0, // Ensure price is number
         }));
 

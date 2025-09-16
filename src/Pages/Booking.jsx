@@ -32,6 +32,7 @@ const Booking = () => {
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [availableCoupons, setAvailableCoupons] = useState([]);
     const [couponLoading, setCouponLoading] = useState(false);
+    const [couponsError, setCouponsError] = useState(false);
     const [loading, setLoading] = useState(false);
     
     const [freeServiceItem, setFreeServiceItem] = useState(null);
@@ -44,13 +45,27 @@ const Booking = () => {
 
     // Initialize EmailJS and fetch coupons
     useEffect(() => {
+        let mounted = true;
+        
         emailjs.init(EMAILJS_PUBLIC_KEY);
-        fetchActiveCoupons();
+        
+        const initializeCoupons = async () => {
+            if (mounted) {
+                await fetchActiveCoupons();
+            }
+        };
+        
+        initializeCoupons();
+        
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     // Fetch active coupons from Firebase
     const fetchActiveCoupons = async () => {
         try {
+            setCouponsError(false);
             const today = new Date().toISOString().split('T')[0];
             
             const q = query(
@@ -72,6 +87,8 @@ const Booking = () => {
             setAvailableCoupons(coupons);
         } catch (error) {
             console.error('Error fetching coupons:', error);
+            setCouponsError(true);
+            toast.error("Failed to load available coupons");
         }
     };
 
@@ -91,27 +108,30 @@ const Booking = () => {
 
             if (!coupon) {
                 toast.error("Invalid coupon code");
-                setCouponLoading(false);
                 return;
             }
 
             const today = new Date().toISOString().split('T')[0];
             if (coupon.validUntil < today) {
                 toast.error("This coupon has expired");
-                setCouponLoading(false);
                 return;
             }
 
             if (coupon.minOrderValue && subtotal < coupon.minOrderValue) {
                 toast.error(`Minimum order value of ₹${coupon.minOrderValue} required for this coupon`);
-                setCouponLoading(false);
                 return;
             }
 
             setAppliedCoupon(coupon);
             
             if (coupon.freeService) {
-                setFreeServiceItem({ ...coupon.freeService, price: 0, isFree: true, quantity: 1, id: coupon.freeService.id });
+                setFreeServiceItem({ 
+                    ...coupon.freeService, 
+                    price: 0, 
+                    isFree: true, 
+                    quantity: 1, 
+                    id: `free-${coupon.freeService.id}` 
+                });
             }
 
             if (coupon.discount > 0 && coupon.freeService) {
@@ -163,17 +183,22 @@ const Booking = () => {
                 const serviceName = item.name;
                 const servicePrice = item.isFree ? "FREE" : `₹${(item.offerPrice !== undefined ? item.offerPrice : item.price) * item.quantity}`;
                 let serviceDetails = `  • ${serviceName} (Qty: ${item.quantity})\n`;
+                if(item.duration) {
+                    serviceDetails += `  - Duration: ${item.duration} min\n`;
+                }
                 if (item.services && item.services.length > 0) {
-                    serviceDetails += item.services.map(s => `  - ${s.name}`).join('\n') + '\n';
+                    serviceDetails += item.services.map(s => `  - ${s.name} (${s.duration || 0} min)`).join('\n') + '\n';
                 }
                 return serviceDetails.trim();
             }).join('\n\n');
+            
+            const totalDuration = allCartItems.reduce((total, item) => total + (item.duration || 0), 0);
 
             const emailMessage = `New Order Received!
             
-Full Order ID: [OrderID]
+Full Order ID: ${orderDetails.orderID}
 
-Full Customer ID: [CustomerID]
+Full Customer ID: ${orderDetails.customerID}
 
 Services Ordered:
 
@@ -192,6 +217,8 @@ Service Details:
 Date: ${orderDetails.date}
 
 Time Slot: ${orderDetails.time}
+
+Total Service Duration: ${totalDuration} mins approx.
 
 Billing:
 
@@ -223,6 +250,16 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
             console.error('Failed to send email notification:', error);
         }
     };
+    
+    const totalDuration = allCartItems.reduce((total, item) => {
+        let duration = 0;
+        if (item.duration) {
+            duration = item.duration;
+        } else if (item.services) {
+            duration = item.services.reduce((sum, service) => sum + (service.duration || 0), 0);
+        }
+        return total + duration * (item.quantity || 1);
+    }, 0);
 
     // Generate time slots from 8 AM to 9 PM
     const generateTimeSlots = () => {
@@ -270,6 +307,25 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
         });
     };
 
+    // Image error handler with better fallback logic
+    const handleImageError = (e) => {
+        const img = e.target;
+        const container = img.parentElement;
+        const fallback = container?.querySelector('.fallback-icon');
+        
+        if (img && fallback) {
+            img.style.display = 'none';
+            fallback.style.display = 'flex';
+        }
+    };
+
+    // Get the maximum date (30 days from today)
+    const getMaxDate = () => {
+        const maxDate = new Date();
+        maxDate.setDate(maxDate.getDate() + 30);
+        return maxDate.toISOString().split('T')[0];
+    };
+
     const handleBookingSubmit = async (e) => {
         e.preventDefault();
 
@@ -279,10 +335,35 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
         }
 
         const { name, phone, houseNo, street, area, city, state, pincode, date, timeSlot } = formData;
+        
+        // Validate phone number format
+        const phoneRegex = /^[6-9]\d{9}$/;
+        if (!phoneRegex.test(phone)) {
+            toast.error("Please enter a valid 10-digit phone number.");
+            return;
+        }
+
+        // Validate pincode
+        const pincodeRegex = /^\d{6}$/;
+        if (!pincodeRegex.test(pincode)) {
+            toast.error("Please enter a valid 6-digit PIN code.");
+            return;
+        }
+
         const fullAddress = `${houseNo}, ${street}, ${area}, ${city}, ${state} - ${pincode}${formData.landmark ? `, Near ${formData.landmark}` : ''}`;
 
         if (!name || !phone || !houseNo || !street || !area || !city || !state || !pincode || !date || !timeSlot || cartItems.length === 0) {
             toast.error("Please fill in all required fields and add at least one service.");
+            return;
+        }
+
+        // Validate selected date
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+            toast.error("Please select a future date.");
             return;
         }
 
@@ -296,6 +377,9 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                 price: it.price ?? 0,
                 offerPrice: it.offerPrice ?? null,
                 quantity: it.quantity || 1,
+                duration: it.duration || null,
+                services: it.services || null,
+                items: it.items || null,
             }));
             
             if (freeServiceItem) {
@@ -326,18 +410,21 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                 freeService: freeServiceItem?.name || "",
                 serviceCharge,
                 total,
+                totalDuration: totalDuration,
                 status: "Pending",
                 createdAt: serverTimestamp(),
             };
 
             const orderRef = await addDoc(collection(db, "orders"), orderData);
             const orderID = orderRef.id;
-
             const customerID = currentUser.uid;
 
-            await sendSellerNotification({ ...orderData, orderID, customerID });
+            // Send email notification (non-blocking)
+            sendSellerNotification({ ...orderData, orderID, customerID }).catch(console.error);
 
+            // Clear cart
             cartItems.forEach((item) => removeFromCart(item.id));
+            
             toast.success("Order placed successfully! Seller has been notified.");
             navigate("/my-orders");
         } catch (error) {
@@ -393,19 +480,16 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
 
                                         return (
                                             <div key={product.id} className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
-                                                <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                                    {hasValidImage ? (
+                                                <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0 relative">
+                                                    {hasValidImage && (
                                                         <img
                                                             className="w-full h-full object-cover"
                                                             src={displayImage}
                                                             alt={product.name || 'Product'}
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                                e.target.nextSibling.style.display = 'flex';
-                                                            }}
+                                                            onError={handleImageError}
                                                         />
-                                                    ) : null}
-                                                    <div className={`w-full h-full flex items-center justify-center text-gray-400 ${hasValidImage ? 'hidden' : 'flex'}`}>
+                                                    )}
+                                                    <div className={`fallback-icon w-full h-full absolute inset-0 flex items-center justify-center text-gray-400 ${hasValidImage ? 'hidden' : 'flex'}`}>
                                                         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                                                         </svg>
@@ -414,10 +498,13 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
 
                                                 <div className="flex-1">
                                                     <h3 className="font-medium text-sm text-gray-900 mb-1">{product.name}</h3>
+                                                    {product.duration && (
+                                                        <p className="text-xs text-gray-500 mb-1">Duration: {product.duration} min</p>
+                                                    )}
                                                     {product.services && product.services.length > 0 && (
                                                         <ul className="text-gray-600 text-sm">
-                                                            {product.services.map((s) => (
-                                                                <li key={s.id}>• {s.name}</li>
+                                                            {product.services.map((s, index) => (
+                                                                <li key={s.id || index}>• {s.name}</li>
                                                             ))}
                                                         </ul>
                                                     )}
@@ -429,13 +516,13 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                      <select
                                                        value={product.quantity || 1}
                                                        onChange={e => updateQuantity(product.id, Number(e.target.value))}
-                                                       className="border border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:outline-none"
+                                                       className="border border-gray-300 rounded px-2 py-1 focus:border-[var(--color-secondary)] focus:outline-none"
                                                      >
                                                        {[...Array(10)].map((_, idx) => (
                                                          <option key={idx + 1} value={idx + 1}>{idx + 1}</option>
                                                        ))}
                                                      </select>
-                                                   </div>
+                                                </div>
                                                 )}
 
                                                 <div className="text-right">
@@ -445,13 +532,14 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                          <p className="font-semibold text-gray-900">
                                                            ₹{(product.offerPrice !== undefined ? product.offerPrice : product.price) * (product.quantity || 1)}
                                                          </p>
-                                                    )}
+                                                )}
                                                 </div>
 
                                                 {!product.isFree && (
                                                    <button
                                                      onClick={() => removeFromCart(product.id)}
                                                      className="text-red-500 hover:text-red-700 p-1"
+                                                     type="button"
                                                    >
                                                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -465,6 +553,7 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                     <button
                                         onClick={() => navigate('/services')}
                                         className="text-[var(--color-secondary)] font-medium hover:text-[var(--color-accent)] transition-colors text-sm"
+                                        type="button"
                                     >
                                         + Add More Services
                                     </button>
@@ -476,6 +565,20 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                             <div className="bg-white rounded-lg shadow-sm p-6">
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Apply Coupon</h2>
                                 
+                                {couponsError && (
+                                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                        <p className="text-sm text-red-600">Failed to load coupons. 
+                                            <button 
+                                                onClick={fetchActiveCoupons}
+                                                className="ml-2 underline hover:no-underline"
+                                                type="button"
+                                            >
+                                                Try again
+                                            </button>
+                                        </p>
+                                    </div>
+                                )}
+                                
                                 {!appliedCoupon ? (
                                     <div className="space-y-4">
                                         <div className="flex gap-3">
@@ -485,11 +588,13 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                                                 placeholder="Enter coupon code"
                                                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                                disabled={couponLoading}
                                             />
                                             <button
                                                 onClick={applyCoupon}
-                                                disabled={couponLoading}
-                                                className="px-6 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:bg-[var(--color-accent)] transition-colors font-medium disabled:opacity-50"
+                                                disabled={couponLoading || !couponCode.trim()}
+                                                className="px-6 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:bg-[var(--color-accent)] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                                type="button"
                                             >
                                                 {couponLoading ? "Applying..." : "Apply"}
                                             </button>
@@ -516,6 +621,7 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                                         setCouponCode(coupon.couponCode);
                                                                     }}
                                                                     className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
+                                                                    type="button"
                                                                 >
                                                                     Use Code
                                                                 </button>
@@ -539,6 +645,7 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                         <button
                                             onClick={removeCoupon}
                                             className="text-red-500 hover:text-red-700 font-medium text-sm"
+                                            type="button"
                                         >
                                             Remove
                                         </button>
@@ -560,9 +667,10 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                 name="name"
                                                 value={formData.name}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[var(--color-secondary)] focus:outline-none"
                                                 placeholder="Enter your full name"
                                                 required
+                                                disabled={loading}
                                             />
                                         </div>
                                         <div>
@@ -573,8 +681,11 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                 value={formData.phone}
                                                 onChange={handleInputChange}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                                                placeholder="Enter your phone number"
+                                                placeholder="Enter 10-digit phone number"
+                                                pattern="[6-9][0-9]{9}"
+                                                maxLength="10"
                                                 required
+                                                disabled={loading}
                                             />
                                         </div>
                                     </div>
@@ -591,9 +702,10 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                     name="houseNo"
                                                     value={formData.houseNo}
                                                     onChange={handleInputChange}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[var(--color-secondary)] focus:outline-none"
                                                     placeholder="House/Flat No."
                                                     required
+                                                    disabled={loading}
                                                 />
                                             </div>
                                             <div>
@@ -606,10 +718,11 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                                                     placeholder="Street/Road"
                                                     required
+                                                    disabled={loading}
                                                 />
                                             </div>
                                         </div>
-                                        
+
                                         <div className="grid md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Area/Locality *</label>
@@ -621,6 +734,7 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                                                     placeholder="Area/Locality"
                                                     required
+                                                    disabled={loading}
                                                 />
                                             </div>
                                             <div>
@@ -633,6 +747,7 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                                                     placeholder="City"
                                                     required
+                                                    disabled={loading}
                                                 />
                                             </div>
                                         </div>
@@ -648,6 +763,7 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                                                     placeholder="State"
                                                     required
+                                                    disabled={loading}
                                                 />
                                             </div>
                                             <div>
@@ -658,8 +774,11 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                     value={formData.pincode}
                                                     onChange={handleInputChange}
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                                                    placeholder="PIN Code"
+                                                    placeholder="6-digit PIN Code"
+                                                    pattern="[0-9]{6}"
+                                                    maxLength="6"
                                                     required
+                                                    disabled={loading}
                                                 />
                                             </div>
                                         </div>
@@ -674,6 +793,7 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                     onChange={handleInputChange}
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                                                     placeholder="Nearby landmark"
+                                                    disabled={loading}
                                                 />
                                             </div>
                                             <div>
@@ -685,6 +805,7 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                     onChange={handleInputChange}
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                                                     placeholder="Any special instructions"
+                                                    disabled={loading}
                                                 />
                                             </div>
                                         </div>
@@ -702,8 +823,10 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                 value={formData.date}
                                                 onChange={handleInputChange}
                                                 min={new Date().toISOString().split("T")[0]}
-                                                className="px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                                max={getMaxDate()}
+                                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:border-[var(--color-secondary)] focus:outline-none"
                                                 required
+                                                disabled={loading}
                                             />
                                         </div>
                                         
@@ -720,12 +843,13 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                             onChange={handleInputChange}
                                                             className="sr-only"
                                                             required
+                                                            disabled={loading}
                                                         />
                                                         <div className={`p-3 text-center text-sm rounded-lg border transition-all ${
                                                             formData.timeSlot === slot.value
-                                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                                ? 'border-[var(--color-secondary)] bg-[var(--color-opaque)] text-[var(--color-secondary)]'
                                                                 : 'border-gray-300 hover:border-gray-400'
-                                                        }`}>
+                                                        } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                             {slot.label}
                                                         </div>
                                                     </label>
@@ -775,14 +899,14 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                     
                                     <div className="flex justify-between items-center text-sm sm:text-base">
                                         <span className="truncate mr-2">Service Charge</span>
-                                        <span className={`font-medium whitespace-nowap ${serviceCharge === 0 ? 'text-[var(--color-secondary)]' : 'text-gray-600'}`}>
+                                        <span className={`font-medium whitespace-nowrap ${serviceCharge === 0 ? 'text-[var(--color-secondary)]' : 'text-gray-600'}`}>
                                             {serviceCharge === 0 ? 'FREE' : `₹${serviceCharge}`}
                                         </span>
                                     </div>
                                     
                                     {discountedSubtotal < 999 && (
                                         <div className="text-xs text-[var(--color-secondary)] bg-[var(--color-opaque)] p-2 rounded">
-                                            💡 Add ₹{(999 - discountedSubtotal).toFixed(0)} more to get FREE service charge!
+                                            Add ₹{(999 - discountedSubtotal).toFixed(0)} more to get FREE service charge!
                                         </div>
                                     )}
                                     
@@ -796,10 +920,15 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                                 You saved ₹{discount}!
                                             </div>
                                         )}
+                                        {totalDuration > 0 && (
+                                            <div className="text-sm text-gray-600 text-right">
+                                                Total duration: {totalDuration} min
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 
-                                <div className="bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-100">
+                                <div className="bg-[var(--color-opaque)] rounded-lg p-3 sm:p-4 border border-blue-100">
                                     <p className="text-sm font-medium text-[var(--color-accent)] mb-2">Service Benefits:</p>
                                     <ul className="text-xs sm:text-sm text-gray-700 space-y-1">
                                         <li>• 100% Secure Payment</li>
@@ -811,24 +940,13 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                         {freeServiceItem && <li>• FREE {freeServiceItem.name} Included!</li>}
                                     </ul>
                                 </div>
-
-                                <div className="mt-4 lg:hidden">
-                                    <button
-                                        type="button"
-                                        onClick={handleBookingSubmit}
-                                        className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                                        disabled={loading || cartItems.length === 0}
-                                    >
-                                        {loading ? "Placing Order..." : `Complete Booking - ₹${total.toFixed(0)}`}
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default Booking;
