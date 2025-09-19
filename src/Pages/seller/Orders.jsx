@@ -70,48 +70,37 @@ const Orders = () => {
   };
 
   const handleCopyToClipboard = (order) => {
-    const servicesText = order.items
-      .map((item) => {
-        let text = `${item.name} x ${item.quantity || 1}`;
+  const servicesText = order.items
+    .map((item) => {
+      let text = `${item.name} x ${item.quantity || 1}`;
+       
+      if (item.services && item.services.length > 0) {
+        text += "\n";
+        text += item.services.map(s => ` • ${s.name}`).join("\n");
+      } else if (item.items && item.items.length > 0) {
+        text += "\n";
+        text += item.items.map(s => ` • ${s.name}`).join("\n");
+      }
+       
+      return text;
+    })
+    .join("\n\n");
 
-        if (item.services && item.services.length > 0) {
-          text += "\nService Duration: Duration not specified\n";
-          text += item.services.map(s => ` • ${s.name}`).join("\n");
-        } else if (item.items && item.items.length > 0) {
-          text += "\nService Duration: Duration not specified\n";
-          text += item.items.map(s => ` • ${s.name}`).join("\n");
-        }
+  const billingDetails = `💰 BILLING: Subtotal: ₹${order.subtotal || 0} ${(order.discount || 0) > 0 ? `Discount: -₹${order.discount}\n` : ''}${order.serviceCharge !== undefined ? `Service Charge: ₹${order.serviceCharge}\n` : ''}Total Amount: ₹${order.total || 0}`;
 
-        return text;
-      })
-      .join("\n\n");
+  const clipboardText = `SERVICES: ${servicesText}
 
-    const billingDetails = `💰 BILLING:
-Subtotal: ₹${order.subtotal || 0}
-${(order.discount || 0) > 0 ? `Discount: -₹${order.discount}\n` : ''}${order.serviceCharge !== undefined ? `Service Charge: ₹${order.serviceCharge}\n` : ''}Total Amount: ₹${order.total || 0}`;
+📅 APPOINTMENT DETAILS: Client Name: ${order.customerName || "N/A"} Address: ${order.address || "N/A"} Phone: ${order.phone || "N/A"} Preferred Date: ${order.date || "N/A"} Preferred Time: ${order.time || "N/A"} ⏰ Total Service Duration: ${order.totalDuration ? order.totalDuration + " min" : "Duration not specified"}
 
-    const clipboardText = `SERVICES:
-${servicesText}
+${billingDetails} `;
 
-📅 APPOINTMENT DETAILS:
-Client Name: ${order.customerName || "N/A"}
-Address: ${order.address || "N/A"}
-Phone: ${order.phone || "N/A"}
-Preferred Date: ${order.date || "N/A"}
-Preferred Time: ${order.time || "N/A"}
-⏰ Total Service Duration: ${order.totalDuration ? order.totalDuration + " min" : "Duration not specified"}
-
-${billingDetails}
-`;
-
-    navigator.clipboard.writeText(clipboardText).then(() => {
-      toast.success("Order details copied to clipboard!");
-    }).catch(err => {
-      console.error('Failed to copy text: ', err);
-      toast.error("Failed to copy details.");
-    });
-  };
-
+  navigator.clipboard.writeText(clipboardText).then(() => {
+    toast.success("Order details copied to clipboard!");
+  }).catch(err => {
+    console.error('Failed to copy text: ', err);
+    toast.error("Failed to copy details.");
+  });
+};
   if (loading) {
     return <div className="py-32 flex justify-center text-gray-500">Loading orders...</div>;
   }
