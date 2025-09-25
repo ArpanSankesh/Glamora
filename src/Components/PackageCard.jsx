@@ -59,13 +59,19 @@ const PackageCard = ({ id, name, description, category, time, price, imageUrl })
       {/* CONTENT */}
       <div className="w-full p-4 flex flex-col justify-between text-gray-500/60 text-sm flex-1">
         <div>
-          <div className="flex justify-between items-center mb-1">
+          <div className="flex justify-between items-start mb-1">
             <p className="pr-2 text-[var(--color-secondary)] font-semibold text-md md:text-xl">
               {name || "Unnamed Package"}
             </p>
-            <p className="text-[var(--color-secondary)] text-xs md:text-base">
-              {time || "N/A"}
-            </p>
+            
+            {/* ✅ MODIFIED TIME DISPLAY LOGIC */}
+            {/* It now only shows if time is a positive number, and adds "min" */}
+            {(time && time > 0) && (
+              <p className="text-[var(--color-secondary)] text-xs md:text-base whitespace-nowrap">
+                {time} min
+              </p>
+            )}
+
           </div>
           {category && (
             <p className="text-[var(--color-accent)] font-medium text-xs md:text-sm mb-1">

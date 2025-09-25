@@ -62,6 +62,7 @@ const Overview = () => {
       setCategories(categoriesMap);
     } catch (err) {
       console.error("Error fetching data:", err);
+      toast.error("Could not fetch data.");
     } finally {
       setLoading(false);
     }
@@ -106,13 +107,14 @@ const Overview = () => {
   const handleEdit = (item, type) => {
     setEditingItem(item);
     setEditType(type);
-    setImageFile(null); // Reset main image file on new edit session
-    setPackageItemImageFiles({}); // Reset package item image files
+    setImageFile(null);
+    setPackageItemImageFiles({});
 
     if (type === "package") {
       setFormData({
         name: item.name || "",
         price: item.price || "",
+        time: item.time || "",
         description: item.description || "",
         items: item.items || [],
         imageUrl: item.imageUrl || "",
@@ -121,6 +123,7 @@ const Overview = () => {
       setFormData({
         name: item.name || "",
         price: item.price || "",
+        time: item.time || "",
         description: item.description || "",
         categoryId: item.categoryId || "",
         imageUrl: item.imageUrl || "",
@@ -130,30 +133,41 @@ const Overview = () => {
 
   // Save changes
   const handleSaveEdit = async () => {
+    if (!editingItem) return;
+    setIsUploading(true);
     try {
-      if (!editingItem) return;
-
-      setIsUploading(true);
-
       let updatedImageUrl = formData.imageUrl;
       if (imageFile) {
         updatedImageUrl = await uploadImage(imageFile);
       }
 
-      let updatedData = {
+      const updatedData = {
         ...formData,
         price: Number(formData.price),
+        time: Number(formData.time || 0),
         imageUrl: updatedImageUrl,
       };
 
-      // Handle image uploads for package items if applicable
-      if (editType === "package" && Object.keys(packageItemImageFiles).length > 0) {
-        const updatedItems = [...formData.items];
-        for (const index in packageItemImageFiles) {
-          const file = packageItemImageFiles[index];
-          const newImageUrl = await uploadImage(file);
-          updatedItems[index] = { ...updatedItems[index], imageUrl: newImageUrl };
-        }
+      if (editType === "package") {
+        // Asynchronously process all package items, including potential image uploads
+        const updatedItems = await Promise.all(
+          formData.items.map(async (item, index) => {
+            let itemImageUrl = item.imageUrl;
+            const file = packageItemImageFiles[index];
+            
+            if (file) {
+              itemImageUrl = await uploadImage(file);
+            }
+            
+            // Return the updated item object with correct data types
+            return {
+              ...item,
+              price: Number(item.price || 0),
+              time: Number(item.time || 0), // Ensures the time is saved as a number
+              imageUrl: itemImageUrl,
+            };
+          })
+        );
         updatedData.items = updatedItems;
       }
       
@@ -179,7 +193,7 @@ const Overview = () => {
     }
   };
 
-  // Update a package item
+  // Updates a single item's field (like time) in the form state
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...formData.items];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
@@ -192,18 +206,16 @@ const Overview = () => {
   };
 
   const handleAddItem = () => {
-    const newItem = { name: "", price: 0, imageUrl: "" };
-    setFormData({ ...formData, items: [...formData.items, newItem] });
+    const newItem = { name: "", price: 0, time: 0, imageUrl: "" };
+    setFormData({ ...formData, items: [...(formData.items || []), newItem] });
   };
-
-  // Handle main image file change
+  
   const handleMainFileChange = (e) => {
     if (e.target.files[0]) {
       setImageFile(e.target.files[0]);
     }
   };
 
-  // Handle package item image file change
   const handlePackageItemFileChange = (index, e) => {
     if (e.target.files[0]) {
       setPackageItemImageFiles({ ...packageItemImageFiles, [index]: e.target.files[0] });
@@ -212,8 +224,8 @@ const Overview = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <p className="text-gray-600 animate-pulse">Loading data...</p>
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-gray-600 animate-pulse text-lg">Loading data...</p>
       </div>
     );
   }
@@ -226,7 +238,6 @@ const Overview = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">
             📦 All Packages
           </h2>
-
           {packages.length > 0 ? (
             <>
               {/* Desktop Table */}
@@ -239,6 +250,9 @@ const Overview = () => {
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
                         Price
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
+                        Duration
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
                         Items
@@ -264,9 +278,12 @@ const Overview = () => {
                         <td className="px-6 py-4 text-gray-800 font-medium">
                           ₹{pkg.price}
                         </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {pkg.time || 0} min
+                        </td>
                         <td className="px-6 py-4">
                           <span className="text-sm text-gray-600">
-                            {pkg.itemsCount || pkg.items?.length || 0} items
+                            {pkg.items?.length || 0} items
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -290,7 +307,6 @@ const Overview = () => {
                   </tbody>
                 </table>
               </div>
-
               {/* Mobile Cards */}
               <div className="md:hidden space-y-4">
                 {packages.map((pkg) => (
@@ -309,7 +325,7 @@ const Overview = () => {
                           ₹{pkg.price}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {pkg.itemsCount || pkg.items?.length || 0} items
+                          {pkg.time || 0} min • {pkg.items?.length || 0} items
                         </p>
                       </div>
                     </div>
@@ -343,7 +359,6 @@ const Overview = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">
             💇 All Services
           </h2>
-
           {services.length > 0 ? (
             <>
               {/* Desktop Table */}
@@ -359,6 +374,9 @@ const Overview = () => {
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
                         Price
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
+                        Duration
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase">
                         Actions
@@ -384,6 +402,9 @@ const Overview = () => {
                         <td className="px-6 py-4 text-gray-800 font-medium">
                           ₹{srv.price}
                         </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {srv.time || 0} min
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex justify-center gap-2">
                             <button
@@ -405,7 +426,6 @@ const Overview = () => {
                   </tbody>
                 </table>
               </div>
-
               {/* Mobile Cards */}
               <div className="md:hidden space-y-4">
                 {services.map((srv) => (
@@ -425,6 +445,9 @@ const Overview = () => {
                         </p>
                         <p className="text-lg font-medium text-gray-800">
                           ₹{srv.price}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Duration: {srv.time || 0} min
                         </p>
                       </div>
                     </div>
@@ -459,22 +482,14 @@ const Overview = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    {editType === "package" ? "📦" : "💇"}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">
-                      Edit {editType === "package" ? "Package" : "Service"}
-                    </h3>
-                    <p className="text-sm text-gray-600">{editingItem.name}</p>
-                  </div>
-                </div>
+                <h3 className="text-xl font-bold text-gray-800">
+                  Edit {editType === "package" ? "Package" : "Service"}
+                </h3>
                 <button
                   onClick={() => setEditingItem(null)}
-                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
                 >
                   ✕
                 </button>
@@ -486,13 +501,10 @@ const Overview = () => {
               <div className="space-y-6">
                 {/* Basic Information Section */}
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <span className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
-                      ℹ
-                    </span>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4">
                     Basic Information
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Name
@@ -503,8 +515,7 @@ const Overview = () => {
                         onChange={(e) =>
                           setFormData({ ...formData, name: e.target.value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        placeholder="Enter name"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div>
@@ -517,13 +528,23 @@ const Overview = () => {
                         onChange={(e) =>
                           setFormData({ ...formData, price: e.target.value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        placeholder="Enter price"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Duration (min)
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.time || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, time: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
-
-                  {/* Image Upload for main item */}
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Main Image
@@ -531,7 +552,7 @@ const Overview = () => {
                     <input
                       type="file"
                       onChange={handleMainFileChange}
-                      className="w-full border border-gray-300 rounded-lg"
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                     />
                     {formData.imageUrl && !imageFile && (
                       <div className="mt-2 text-sm text-gray-500 flex items-center gap-2">
@@ -540,17 +561,10 @@ const Overview = () => {
                           alt="Current"
                           className="w-10 h-10 object-cover rounded"
                         />
-                        <p>Current image (select a new file to change)</p>
-                      </div>
-                    )}
-                    {imageFile && (
-                      <div className="mt-2 text-sm text-gray-500">
-                        <p>New image selected: {imageFile.name}</p>
+                        <p>Current image</p>
                       </div>
                     )}
                   </div>
-
-                  {/* Service Category Selection */}
                   {editType === "service" && (
                     <div className="mt-4">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -561,7 +575,7 @@ const Overview = () => {
                         onChange={(e) =>
                           setFormData({ ...formData, categoryId: e.target.value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select Category</option>
                         {Object.entries(categories).map(([id, name]) => (
@@ -572,65 +586,50 @@ const Overview = () => {
                       </select>
                     </div>
                   )}
-
-                  {/* Package Description */}
-                  {editType === "package" && (
-                    <div className="mt-4">
+                  <div className="mt-4">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Description
                       </label>
                       <textarea
                         value={formData.description || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            description: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows="3"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                        placeholder="Enter package description"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter a description..."
                       />
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Package Items Section */}
                 {editType === "package" && (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                        <span className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
-                          📋
-                        </span>
+                      <h4 className="text-lg font-semibold text-gray-800">
                         Package Items ({formData.items?.length || 0})
                       </h4>
                       <button
                         onClick={handleAddItem}
-                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 text-sm font-medium"
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium"
                       >
-                        <span>+</span> Add Item
+                        + Add Item
                       </button>
                     </div>
 
-                    <div className="space-y-4 max-h-64 overflow-y-auto">
+                    <div className="space-y-4 max-h-64 overflow-y-auto p-1">
                       {formData.items && formData.items.length > 0 ? (
                         formData.items.map((item, idx) => (
                           <div
                             key={idx}
                             className="bg-white border border-gray-200 rounded-lg p-4 relative"
                           >
-                            <div className="absolute top-2 right-2">
-                              <button
-                                onClick={() => handleRemoveItem(idx)}
-                                className="w-6 h-6 bg-red-100 hover:bg-red-200 text-red-600 rounded-full flex items-center justify-center text-xs transition-colors"
-                                title="Remove item"
-                              >
-                                ✕
-                              </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-8">
+                            <button
+                              onClick={() => handleRemoveItem(idx)}
+                              className="absolute top-2 right-2 w-6 h-6 bg-red-100 hover:bg-red-200 text-red-600 rounded-full flex items-center justify-center text-xs"
+                              title="Remove item"
+                            >
+                              ✕
+                            </button>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pr-8">
                               <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">
                                   Item Name
@@ -638,11 +637,9 @@ const Overview = () => {
                                 <input
                                   type="text"
                                   value={item.name || ""}
-                                  onChange={(e) =>
-                                    handleItemChange(idx, "name", e.target.value)
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                  placeholder="Item name"
+                                  onChange={(e) => handleItemChange(idx, "name", e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                                  placeholder="Service name"
                                 />
                               </div>
                               <div>
@@ -652,10 +649,20 @@ const Overview = () => {
                                 <input
                                   type="number"
                                   value={item.price || ""}
-                                  onChange={(e) =>
-                                    handleItemChange(idx, "price", e.target.value)
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                  onChange={(e) => handleItemChange(idx, "price", e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  Time (min)
+                                </label>
+                                <input
+                                  type="number"
+                                  value={item.time || ""}
+                                  onChange={(e) => handleItemChange(idx, "time", e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                                   placeholder="0"
                                 />
                               </div>
@@ -667,35 +674,14 @@ const Overview = () => {
                               <input
                                 type="file"
                                 onChange={(e) => handlePackageItemFileChange(idx, e)}
-                                className="w-full border border-gray-200 rounded-md"
+                                className="w-full text-sm text-gray-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                               />
-                                {item.imageUrl && !packageItemImageFiles[idx] && (
-                                  <div className="mt-2 text-sm text-gray-500 flex items-center gap-2">
-                                    <img
-                                      src={item.imageUrl}
-                                      alt="Current"
-                                      className="w-10 h-10 object-cover rounded"
-                                    />
-                                    <p>Current image</p>
-                                  </div>
-                                )}
-                                {packageItemImageFiles[idx] && (
-                                  <div className="mt-2 text-sm text-gray-500">
-                                    <p>New image selected: {packageItemImageFiles[idx].name}</p>
-                                  </div>
-                                )}
                             </div>
                           </div>
                         ))
                       ) : (
                         <div className="text-center py-8 text-gray-500">
-                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                            📦
-                          </div>
-                          <p className="text-sm">No items in this package yet</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Click "Add Item" to get started
-                          </p>
+                          <p>No items in this package yet.</p>
                         </div>
                       )}
                     </div>
@@ -708,44 +694,16 @@ const Overview = () => {
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
               <button
                 onClick={() => setEditingItem(null)}
-                className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center justify-center ${isUploading ? 'cursor-not-allowed' : ''}`}
                 disabled={isUploading}
               >
-                {isUploading ? (
-                  <>
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    <span>Uploading...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>💾</span> Save Changes
-                  </>
-                )}
+                {isUploading ? "Saving..." : "💾 Save Changes"}
               </button>
             </div>
           </div>

@@ -69,8 +69,8 @@ const Booking = () => {
             return item.items.reduce((sum, subItem) => sum + (Number(subItem.duration) || 0), 0);
         }
         if (item.services && Array.isArray(item.services) && item.services.length > 0) {
-            return item.services.reduce((sum, subItem) => sum + (Number(subItem.duration) || 0), 0);
-        }
+    return item.services.reduce((sum, subItem) => sum + (Number(subItem.duration || subItem.time) || 0), 0);
+}
         
         // For single services which might have 'time' (old) or 'duration' (new)
         const durationValue = item.duration || item.time;
@@ -266,12 +266,10 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
 `;
 
             const emailParams = {
-                name: orderDetails.customerName,
-                time: new Date().toLocaleString(),
-                message: emailMessage,
-                to_email: SELLER_EMAIL,
-                to_name: 'Seller'
-            };
+    name: orderDetails.customerName,
+    time: new Date().toLocaleString(),
+    message: emailMessage,
+};
 
             await emailjs.send(
                 EMAILJS_SERVICE_ID,

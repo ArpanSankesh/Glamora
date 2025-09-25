@@ -7,7 +7,11 @@ import ContactSection from "../Components/ContactSection";
 import PackageCard from "../Components/PackageCard.jsx";
 
 const Services = () => {
-  const [selectedServiceCategory, setSelectedServiceCategory] = useState("all");
+  // MODIFICATION 1: Initialize state from sessionStorage, defaulting to 'all'
+  const [selectedServiceCategory, setSelectedServiceCategory] = useState(
+    () => sessionStorage.getItem('selectedServiceCategory') || 'all'
+  );
+  
   const [services, setServices] = useState([]);
   const [packages, setPackages] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -17,31 +21,18 @@ const Services = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch services
         const servicesSnap = await getDocs(collection(db, "services"));
-        const servicesData = servicesSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const servicesData = servicesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-        // Fetch packages
         const packagesSnap = await getDocs(collection(db, "packages"));
-        const packagesData = packagesSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const packagesData = packagesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-        // Fetch categories
         const categoriesSnap = await getDocs(collection(db, "categories"));
-        const categoriesData = categoriesSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const categoriesData = categoriesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
         setServices(servicesData);
         setPackages(packagesData);
 
-        // add "All" option with a default icon
         setCategories([
           { 
             id: "all", 
@@ -54,13 +45,23 @@ const Services = () => {
         console.error("Error fetching data from Firestore:", error);
       } finally {
         setLoading(false);
+        const savedPosition = sessionStorage.getItem('servicesScrollPosition');
+        if (savedPosition) {
+          window.scrollTo(0, parseInt(savedPosition, 10));
+          sessionStorage.removeItem('servicesScrollPosition');
+        }
       }
     };
 
     fetchData();
-  }, []);
 
-  // Filter services by categoryId
+    // MODIFICATION 2: Save both the category and scroll position on exit
+    return () => {
+      sessionStorage.setItem('servicesScrollPosition', window.scrollY);
+      sessionStorage.setItem('selectedServiceCategory', selectedServiceCategory);
+    };
+  }, [selectedServiceCategory]); // Add selectedServiceCategory to dependency array
+
   const filteredServices =
     selectedServiceCategory === "all"
       ? services
@@ -70,7 +71,6 @@ const Services = () => {
     setSelectedServiceCategory(categoryId);
   };
 
-  // Carousel scroll functions
   const scrollLeft = () => {
     if (carouselRef.current) {
       carouselRef.current.scrollBy({ left: -200, behavior: 'smooth' });

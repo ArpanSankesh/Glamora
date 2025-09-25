@@ -67,7 +67,7 @@ const PackageDetails = () => {
 
   const calculateTotalDuration = () => {
     return selectedServices.reduce((total, index) => {
-      return total + (pkgData.items[index]?.duration || 0);
+      return total + (pkgData.items[index]?.time || 0);
     }, 0);
   };
 
@@ -180,7 +180,7 @@ const PackageDetails = () => {
                 <p className="font-semibold">{service.name}</p>
                 <p className="text-gray-600">₹{service.price}</p>
                 <p className="text-gray-500 text-xs mt-1">
-                  {service.duration || 0} min
+                  {service.time || 0} min
                 </p>
               </div>
             </div>
