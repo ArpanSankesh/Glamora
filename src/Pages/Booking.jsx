@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCart } from "../context/CartContext";
+import { useCart } from "../context/CartContext.jsx";
 import { collection, addDoc, serverTimestamp, getDocs, query, where, orderBy, limit } from "firebase/firestore";
-import { db } from "../config/firebaseConfig";
-import { useAuth } from "../context/AuthContext";
+import { db } from "../config/firebaseConfig.js";
+import { useAuth } from "../context/AuthContext.jsx";
 import toast from "react-hot-toast";
 import emailjs from '@emailjs/browser';
 
@@ -61,6 +61,29 @@ const Booking = () => {
             mounted = false;
         };
     }, []);
+    
+    // Helper function to get duration for any item (service or package)
+    const getItemDuration = (item) => {
+        // For packages from Firestore or cart context
+        if (item.items && Array.isArray(item.items) && item.items.length > 0) {
+            return item.items.reduce((sum, subItem) => sum + (Number(subItem.duration) || 0), 0);
+        }
+        if (item.services && Array.isArray(item.services) && item.services.length > 0) {
+            return item.services.reduce((sum, subItem) => sum + (Number(subItem.duration) || 0), 0);
+        }
+        
+        // For single services which might have 'time' (old) or 'duration' (new)
+        const durationValue = item.duration || item.time;
+        if (typeof durationValue === 'number') {
+            return durationValue;
+        }
+        // Fallback for old string data like "30 min"
+        if (typeof durationValue === 'string') {
+            const parsed = parseInt(durationValue, 10);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+        return 0; // Default case
+    };
 
     // Fetch active coupons from Firebase
     const fetchActiveCoupons = async () => {
@@ -175,6 +198,13 @@ const Booking = () => {
     
     const allCartItems = [...cartItems, ...(freeServiceItem ? [freeServiceItem] : [])];
 
+    // Calculate total duration for all items in the cart
+    const totalDuration = allCartItems.reduce((total, item) => {
+        const duration = getItemDuration(item);
+        // Multiply by quantity and add to total
+        return total + duration * (item.quantity || 1);
+    }, 0);
+
     // Send email notification to seller
     const sendSellerNotification = async (orderDetails) => {
         try {
@@ -183,17 +213,21 @@ const Booking = () => {
                 const serviceName = item.name;
                 const servicePrice = item.isFree ? "FREE" : `₹${(item.offerPrice !== undefined ? item.offerPrice : item.price) * item.quantity}`;
                 let serviceDetails = `  • ${serviceName} (Qty: ${item.quantity})\n`;
-                if(item.duration) {
-                    serviceDetails += `  - Duration: ${item.duration} min\n`;
+                
+                const duration = getItemDuration(item);
+                if (duration) {
+                    serviceDetails += `  - Duration: ${duration} min\n`;
+                } else {
+                    serviceDetails += `  - Duration: Not specified\n`;
                 }
+                
                 if (item.services && item.services.length > 0) {
                     serviceDetails += item.services.map(s => `  - ${s.name} (${s.duration || 0} min)`).join('\n') + '\n';
                 }
+
                 return serviceDetails.trim();
             }).join('\n\n');
             
-            const totalDuration = allCartItems.reduce((total, item) => total + (item.duration || 0), 0);
-
             const emailMessage = `New Order Received!
             
 Full Order ID: ${orderDetails.orderID}
@@ -250,16 +284,6 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
             console.error('Failed to send email notification:', error);
         }
     };
-    
-    const totalDuration = allCartItems.reduce((total, item) => {
-        let duration = 0;
-        if (item.duration) {
-            duration = item.duration;
-        } else if (item.services) {
-            duration = item.services.reduce((sum, service) => sum + (service.duration || 0), 0);
-        }
-        return total + duration * (item.quantity || 1);
-    }, 0);
 
     // Generate time slots from 8 AM to 9 PM
     const generateTimeSlots = () => {
@@ -327,113 +351,102 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
     };
 
     const handleBookingSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        if (!currentUser) {
-            toast.error("You must be logged in to place an order.");
-            return;
-        }
+    if (!currentUser) {
+        toast.error("You must be logged in to place an order.");
+        return;
+    }
 
-        const { name, phone, houseNo, street, area, city, state, pincode, date, timeSlot } = formData;
+    const { name, phone, houseNo, street, area, city, state, pincode, date, timeSlot } = formData;
+    
+    // Validate phone number format
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(phone)) {
+        toast.error("Please enter a valid 10-digit phone number.");
+        return;
+    }
+
+    // Validate pincode
+    const pincodeRegex = /^\d{6}$/;
+    if (!pincodeRegex.test(pincode)) {
+        toast.error("Please enter a valid 6-digit PIN code.");
+        return;
+    }
+
+    const fullAddress = `${houseNo}, ${street}, ${area}, ${city}, ${state} - ${pincode}${formData.landmark ? `, Near ${formData.landmark}` : ''}`;
+
+    if (!name || !phone || !houseNo || !street || !area || !city || !state || !pincode || !date || !timeSlot || cartItems.length === 0) {
+        toast.error("Please fill in all required fields and add at least one service.");
+        return;
+    }
+
+    // Validate selected date
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+        toast.error("Please select a future date.");
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+        const normalizedItems = allCartItems.map((it) => ({
+            id: it.id,
+            name: it.name,
+            imageUrl: it.imageUrl || it.image || it.packageImageUrl || "https://placehold.co/200x200?text=Service",
+            price: it.price ?? 0,
+            offerPrice: it.offerPrice ?? null,
+            quantity: it.quantity || 1,
+            duration: getItemDuration(it),
+            services: it.services || null,
+            items: it.items || null,
+            isFree: it.isFree || false,
+        }));
         
-        // Validate phone number format
-        const phoneRegex = /^[6-9]\d{9}$/;
-        if (!phoneRegex.test(phone)) {
-            toast.error("Please enter a valid 10-digit phone number.");
-            return;
-        }
+        const orderData = {
+            userId: currentUser.uid,
+            customerName: name,
+            phone,
+            address: fullAddress,
+            instruction: formData.instruction || "",
+            date,
+            time: timeSlot,
+            items: normalizedItems,
+            subtotal,
+            discount,
+            couponCode: appliedCoupon?.couponCode || "",
+            couponName: appliedCoupon?.name || "",
+            freeService: freeServiceItem?.name || "",
+            serviceCharge,
+            total,
+            totalDuration: totalDuration,
+            status: "Pending",
+            createdAt: serverTimestamp(),
+        };
 
-        // Validate pincode
-        const pincodeRegex = /^\d{6}$/;
-        if (!pincodeRegex.test(pincode)) {
-            toast.error("Please enter a valid 6-digit PIN code.");
-            return;
-        }
+        const orderRef = await addDoc(collection(db, "orders"), orderData);
+        const orderID = orderRef.id;
+        const customerID = currentUser.uid;
 
-        const fullAddress = `${houseNo}, ${street}, ${area}, ${city}, ${state} - ${pincode}${formData.landmark ? `, Near ${formData.landmark}` : ''}`;
+        // Send email notification (non-blocking)
+        sendSellerNotification({ ...orderData, orderID, customerID }).catch(console.error);
 
-        if (!name || !phone || !houseNo || !street || !area || !city || !state || !pincode || !date || !timeSlot || cartItems.length === 0) {
-            toast.error("Please fill in all required fields and add at least one service.");
-            return;
-        }
-
-        // Validate selected date
-        const selectedDate = new Date(date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Clear cart
+        cartItems.forEach((item) => removeFromCart(item.id));
         
-        if (selectedDate < today) {
-            toast.error("Please select a future date.");
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            const normalizedItems = cartItems.map((it) => ({
-                id: it.id,
-                name: it.name,
-                imageUrl: it.imageUrl || it.image || it.packageImageUrl || "https://placehold.co/200x200?text=Service",
-                price: it.price ?? 0,
-                offerPrice: it.offerPrice ?? null,
-                quantity: it.quantity || 1,
-                duration: it.duration || null,
-                services: it.services || null,
-                items: it.items || null,
-            }));
-            
-            if (freeServiceItem) {
-                normalizedItems.push({
-                    id: freeServiceItem.id,
-                    name: freeServiceItem.name,
-                    imageUrl: freeServiceItem.imageUrl,
-                    price: 0,
-                    offerPrice: 0,
-                    isFree: true,
-                    quantity: 1,
-                });
-            }
-
-            const orderData = {
-                userId: currentUser.uid,
-                customerName: name,
-                phone,
-                address: fullAddress,
-                instruction: formData.instruction || "",
-                date,
-                time: timeSlot,
-                items: normalizedItems,
-                subtotal,
-                discount,
-                couponCode: appliedCoupon?.couponCode || "",
-                couponName: appliedCoupon?.name || "",
-                freeService: freeServiceItem?.name || "",
-                serviceCharge,
-                total,
-                totalDuration: totalDuration,
-                status: "Pending",
-                createdAt: serverTimestamp(),
-            };
-
-            const orderRef = await addDoc(collection(db, "orders"), orderData);
-            const orderID = orderRef.id;
-            const customerID = currentUser.uid;
-
-            // Send email notification (non-blocking)
-            sendSellerNotification({ ...orderData, orderID, customerID }).catch(console.error);
-
-            // Clear cart
-            cartItems.forEach((item) => removeFromCart(item.id));
-            
-            toast.success("Order placed successfully! Seller has been notified.");
-            navigate("/my-orders");
-        } catch (error) {
-            console.error("Error placing order:", error);
-            toast.error("Failed to place order. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    };
+        toast.success("Order placed successfully! Seller has been notified.");
+        navigate("/my-orders");
+    } catch (error) {
+        console.error("Error placing order:", error);
+        toast.error("Failed to place order. Please try again.");
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -472,6 +485,7 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                             ) : (
                                 <div className="space-y-2">
                                     {allCartItems.map((product) => {
+                                        const itemDuration = getItemDuration(product);
                                         const displayImage = product.image || product.imageUrl || product.packageImageUrl;
                                         const hasValidImage = displayImage && 
                                                              typeof displayImage === 'string' && 
@@ -498,8 +512,8 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
 
                                                 <div className="flex-1">
                                                     <h3 className="font-medium text-sm text-gray-900 mb-1">{product.name}</h3>
-                                                    {product.duration && (
-                                                        <p className="text-xs text-gray-500 mb-1">Duration: {product.duration} min</p>
+                                                    {itemDuration > 0 && (
+                                                        <p className="text-xs text-gray-500 mb-1">Duration: {itemDuration} min</p>
                                                     )}
                                                     {product.services && product.services.length > 0 && (
                                                         <ul className="text-gray-600 text-sm">
@@ -923,6 +937,11 @@ ${orderDetails.instruction ? `Special Instructions: ${orderDetails.instruction}`
                                         {totalDuration > 0 && (
                                             <div className="text-sm text-gray-600 text-right">
                                                 Total duration: {totalDuration} min
+                                            </div>
+                                        )}
+                                        {formData.timeSlot && (
+                                            <div className="text-sm text-gray-600 text-right">
+                                                Time Slot: {timeSlots.find(slot => slot.value === formData.timeSlot)?.label || formData.timeSlot}
                                             </div>
                                         )}
                                     </div>
