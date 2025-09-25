@@ -9,7 +9,7 @@ const Testimonials = () => {
   const [loading, setLoading] = useState(true);
 
   // Your Google Business Profile URL - Replace with your actual Google Business URL
-  const GOOGLE_REVIEW_URL = "https://www.google.com/search?q=prettynbeauty&rlz=1C1RXQR_enIN1108IN1108&oq=prett&gs_lcrp=EgZjaHJvbWUqCAgBEEUYJxg7MgYIABBFGDwyCAgBEEUYJxg7MhUIAhAuGEMYxwEYsQMY0QMYgAQYigUyCggDEC4YsQMYgAQyDwgEEC4YQxixAxiABBiKBTIGCAUQRRg8MgYIBhBFGDwyBggHEEUYPNIBCDQ2MTJqMGo3qAIAsAIA&sourceid=chrome&ie=UTF-8#lrd=0x39f5e3ca3de30e63:0xd0e3081e272cffc4,3,,,,";
+  const GOOGLE_REVIEW_URL = "https://www.google.com/search?sca_esv=ddc633b75768fb2c&rlz=1C1RXQR_enIN1108IN1108&sxsrf=AE3TifP9guhHuD6NfE7s7mT0Bwm-cNC8dw:1758799723270&si=AMgyJEtREmoPL4P1I5IDCfuA8gybfVI2d5Uj7QMwYCZHKDZ-EyTdVejcf1wLy0MXipoCdwuEo2q690dPHi5Fa1gzX4Sj3DrFmxMq1oTZWewiTYKKF4fbSeetWzimnRGr44WBkYm5mfkx&q=PrettyNbeauty+Reviews&sa=X&ved=2ahUKEwi0_PHF5_OPAxWQzTgGHZFRCvAQ0bkNegQIHhAD&biw=1440&bih=825&dpr=1.5";
   
 
   // Fetch testimonials from Firestore
